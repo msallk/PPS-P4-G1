@@ -9,7 +9,7 @@ public class Player implements cell.sim.Player {
 	private static int versions = 0;
 	private int version = ++versions;
 
-	public String name() { return "Dumb" + (version != 1 ? " v" + version : ""); }
+	public String name() { return "Dumb" + (versions > 1 ? " v" + version : ""); }
 
 	public Direction move(int[][] board, int[] location, int[] sack,
 	                      int[][] players, int[][] traders)

@@ -12,7 +12,7 @@ public class Cell {
 	private static int traders = 10;
 	private static int marbles = 10;
 	private static int dim = 5;
-	private static String mapPath = "cell/map/rotate.txt";
+	private static String mapPath = "cell/map/g3-traps.txt";
 	private static String playerPath = "cell/players.list";
 
 	// return game turns
@@ -44,9 +44,8 @@ public class Cell {
 		try {
 			// get file of players
 			BufferedReader in = new BufferedReader(new FileReader(new File(txtPath)));
-			// get tools 
+			// get tools
 			ClassLoader loader = ToolProvider.getSystemToolClassLoader();
-			//ClassLoader loader=ClassLoader.getSystemClassLoader();
 			JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 			StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
 			// load players
@@ -67,7 +66,7 @@ public class Cell {
 				if (!ok) throw new Exception("compile error");
 				System.err.println("OK");
 				// load class
-				System.err.println("Loading player class...   ");
+				System.err.print("Loading player class...   ");
 				Class playerClass = loader.loadClass("cell." + group + ".Player");
 				System.err.println("OK");
 				// set name of player and append on list
@@ -171,6 +170,8 @@ public class Cell {
 			if (req != 'B')
 				throw new Exception("Invalid first request");
 		}
+		for (File f : directoryFiles("cell/sim/webpages", ".html"))
+			f.delete();
 		for (int t = 1 ; t <= turns; ++t) {
 			boolean f = true;
 			if (server != null) do {
@@ -442,6 +443,8 @@ public class Cell {
 		{Player.Direction.W,  Player.Direction.E,
 		 Player.Direction.NW, Player.Direction.N,
 		 Player.Direction.S, Player.Direction.SE};
+		int[][] player_location_copy = copyII(player_location);
+		int[][] trader_location_copy = copyII(trader_location);
 		// move players
 		for (int p = 0 ; p != players.length ; ++p) {
 			if (!in[p]) continue;
@@ -466,8 +469,8 @@ public class Cell {
 				continue;
 			}
 			// move player
-			Player.Direction dir = players[p].move(copyII(board), copyI(player_location[p]), copyI(sacks[p]),
-			                                       copyII(player_location), copyII(trader_location));
+			Player.Direction dir = players[p].move(copyII(board), copyI(player_location[p]),
+			      copyI(sacks[p]), copyII(player_location_copy), copyII(trader_location_copy));
 			System.err.println("Player " + p + " moves " + dir);
 			int[] new_location = move(location, dir);
 			int color = color(new_location, board);
