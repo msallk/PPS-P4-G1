@@ -4,7 +4,8 @@ public class Player implements cell.sim.Player, Logger {
 	boolean DEBUG=true;
 	
 	public void log(String message){
-		System.err.println(message);
+		if(DEBUG)
+			System.err.println(message);
 	}
 	
 	@Override
