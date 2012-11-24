@@ -1,7 +1,12 @@
 package cell.g1;
 
-public class Player implements cell.sim.Player {
-
+public class Player implements cell.sim.Player, Logger {
+	boolean DEBUG=true;
+	
+	public void log(String message){
+		System.err.println(message);
+	}
+	
 	@Override
 	public String name() {
 		// TODO Auto-generated method stub
