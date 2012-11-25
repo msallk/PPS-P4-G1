@@ -1,2 +1,3 @@
 *.class
 cell/sim/webpages/*
+*.list

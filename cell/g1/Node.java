@@ -25,7 +25,7 @@ public class Node implements Comparable{
 	}
 	
 	public int[] getLocation(){
-		return new int[]{y,x};
+		return new int[]{x,y};
 	}
 
 	@Override

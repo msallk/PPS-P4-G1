@@ -4,11 +4,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
-public class Graph {
+public class Graph implements Logger{
 	private int[][] map;
 	private Node[][] mapNodes;
 	private int[][] traders; 
 	
+	public void log(String m){
+		System.err.println(m);
+	}
 	public Graph(int[][] map){
 		this.map=map;
 		mapNodes=new Node[map[0].length][map.length];
@@ -23,7 +26,11 @@ public class Graph {
 		int distance=Integer.MAX_VALUE;
 		int [] trader=new int[2];
 		for(int i=0;i<t.length;i++){
+			log("min distance: "+distance);
+			log("trader: "+Arrays.toString(trader));
 			int temp=getDistance(current,t[i]);
+			log("next trader: "+Arrays.toString(t[i]));
+			log("new distance: "+temp);
 			if(temp<distance){
 				trader=t[i];
 				distance=temp;
@@ -38,18 +45,18 @@ public class Graph {
 		int x2=trader[1];
 		int y2=trader[0];
 		if(y1==y2){
-			return Math.abs(y1-y2);
+			return Math.abs(x1-x2);
 		}
 		else if(y1>y2){
 			if(x1>x2){
-				return Math.abs(y1-y2)+(x1-x2)<=(y1-y2)?0:((x1-x2)-(y1-y2));
+				return Math.abs(y1-y2)+((x1-x2)<=(y1-y2)?0:((x1-x2)-(y1-y2)));
 			}else{
 				return Math.abs(y1-y2)+Math.abs(x1-x2);
 			}
 		}
 		else{
 			if(x1<x2){
-				return Math.abs(y1-y2)+(x2-x1)<=(y2-y1)?0:(x2-x1)-(y2-y1);
+				return Math.abs(y1-y2)+((x2-x1)<=(y2-y1)?0:(x2-x1)-(y2-y1));
 			}else{
 				return Math.abs(y1-y2)+Math.abs(x1-x2);
 			}

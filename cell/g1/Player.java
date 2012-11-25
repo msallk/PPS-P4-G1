@@ -1,6 +1,7 @@
 package cell.g1;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 
@@ -58,8 +59,10 @@ public class Player implements cell.sim.Player, Logger {
 		}
 		else
 		{
+			log("chosen:"+Arrays.toString(chosen.getLocation()));
 			int di=chosen.getLocation()[0]-location[0];
 			int dj=chosen.getLocation()[1]-location[1];
+			log(di+".."+dj);
 			if(di==0 && dj==-1)
 			{
 				 dir=Player.Direction.W;
