@@ -7,6 +7,7 @@ import java.util.Collections;
 public class Graph {
 	private int[][] map;
 	private Node[][] mapNodes;
+	private int[][] traders; 
 	
 	public Graph(int[][] map){
 		this.map=map;
@@ -17,6 +18,12 @@ public class Graph {
 			}
 	}
 
+	public int[] NearestTrader(int[][] t){
+		this.traders=t;
+		return null;
+	}
+	
+	
 	public ArrayList<Path> getPath(int[] current, int[] dest){
 		ArrayList<Path> paths=new ArrayList<Path>();
 		BFS(current, dest, paths);
@@ -33,6 +40,19 @@ public class Graph {
 		if(x1==x2 && y1==y2){
 			nodes.add(mapNodes[y1][x1]);
 			return nodes;
+		}
+		if(y1==y2 && x1>x2){
+			nodes.add(mapNodes[y1][x1-1]);
+			return nodes;
+		}
+		if(y1==y2 && x1<x2){
+			nodes.add(mapNodes[y1][x1+1]);
+			return nodes;
+		}
+		if(y1>y2){
+			
+		}else{
+			
 		}
 		return null;
 	}
