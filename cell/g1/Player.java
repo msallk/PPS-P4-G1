@@ -157,6 +157,37 @@ public class Player implements cell.sim.Player, Logger {
 			}
 		}
 		
+		while(gv<rv)
+		{
+			for(int i=0; i<6; i++)
+			{
+				if(savedSack[i]>3) //only one color has a count that is more than 3
+				{
+					int n=(int)((rv-gv)/rate[i]+1);
+					int maxGivable=savedSack[i]-3;
+					if(maxGivable>n)
+					{
+						give[i]+=n;
+						gv+=rate[i]*n;
+					}
+					else
+					{
+						for(int j=0; j<6; j++)
+						{
+							if(request[j]>0)
+							{
+								request[j]=request[j]-1;
+								rv=rv-rate[j];
+								System.out.println("rv is now: "+rv);
+								
+							}
+						} 
+					}
+				}
+			}
+			//System.out.print("infinite loops!!!!!!!!");
+		}
+		
 	/*	for (int i = 0 ; i != 10 ; ++i) {
 =======
 		for (int i = 0 ; i != 10 ; ++i) {
