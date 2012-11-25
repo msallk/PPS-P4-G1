@@ -12,16 +12,48 @@ public class Graph {
 	public Graph(int[][] map){
 		this.map=map;
 		mapNodes=new Node[map[0].length][map.length];
-		for(int i=0;i<map[0].length;i++)
-			for(int j=0;j<map.length;j++){
+		for(int i=0;i<map.length;i++)
+			for(int j=0;j<map[0].length;j++){
 				mapNodes[i][j]=new Node(i,j,map[i][j]);
 			}
 	}
 
 	public int[] nearestTrader(int[] current, int[][] t){
 		this.traders=t;
-		
-		return null;
+		int distance=Integer.MAX_VALUE;
+		int [] trader=new int[2];
+		for(int i=0;i<t.length;i++){
+			int temp=getDistance(current,t[i]);
+			if(temp<distance){
+				trader=t[i];
+				distance=temp;
+			}
+		}
+		return trader;
+	}
+	
+	public int getDistance(int[] curr, int[] trader){
+		int x1=curr[1];
+		int y1=curr[0];
+		int x2=trader[1];
+		int y2=trader[0];
+		if(y1==y2){
+			return Math.abs(y1-y2);
+		}
+		else if(y1>y2){
+			if(x1>x2){
+				return Math.abs(y1-y2)+(x1-x2)<=(y1-y2)?0:((x1-x2)-(y1-y2));
+			}else{
+				return Math.abs(y1-y2)+Math.abs(x1-x2);
+			}
+		}
+		else{
+			if(x1<x2){
+				return Math.abs(y1-y2)+(x2-x1)<=(y2-y1)?0:(x2-x1)-(y2-y1);
+			}else{
+				return Math.abs(y1-y2)+Math.abs(x1-x2);
+			}
+		}
 	}
 	
 	
@@ -50,10 +82,30 @@ public class Graph {
 			nodes.add(mapNodes[y1][x1+1]);
 			return nodes;
 		}
-		if(y1>y2){
-			
-		}else{
-			
+		if(y1!=y2){
+			if(getDistance(current,dest)==1){
+				nodes.add(mapNodes[y2][x2]);
+				return nodes;
+			}
+			if(y1>y2 && x1>x2 && (y1-y2)>=(x1-x2)){
+				nodes.add(mapNodes[y1-1][x1-1]);
+				return nodes;
+			}
+			if(y1<y2 && x1<x2 && (y2-y1)>=(x2-x1)){
+				nodes.add(mapNodes[y1+1][x1+1]);
+				return nodes;
+			}
+			if(y1<y2){
+				nodes.add(mapNodes[y1+1][x1]);
+			}else{
+				nodes.add(mapNodes[y1-1][x1]);
+			}
+			if(x1>x2){
+				nodes.add(mapNodes[y1][x1+1]);
+			}else{
+				nodes.add(mapNodes[y1][x1-1]);
+			}
+			return nodes;
 		}
 		return null;
 	}
