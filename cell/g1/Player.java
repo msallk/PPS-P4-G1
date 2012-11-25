@@ -10,7 +10,7 @@ public class Player implements cell.sim.Player, Logger {
 	private Random gen = new Random();
 	private int[] savedSack;
 	private Graph graph=null;
-	private ArrayList<Node> nextSteps= new ArrayList<>();
+	private ArrayList<Node> nextSteps= new ArrayList<Node>();
 
 	public void log(String message){
 		if(DEBUG)
@@ -154,8 +154,10 @@ public class Player implements cell.sim.Player, Logger {
 			}
 		}
 		
-		
 	/*	for (int i = 0 ; i != 10 ; ++i) {
+=======
+		for (int i = 0 ; i != 10 ; ++i) {
+>>>>>>> Stashed changes
 			int j = gen.nextInt(6);
 			if (give[j] == savedSack[j]) break;
 			give[j]++;
