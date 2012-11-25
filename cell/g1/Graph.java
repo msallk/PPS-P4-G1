@@ -63,7 +63,7 @@ public class Graph implements Logger{
 		}
 	}
 	
-	
+	//NOT IN USE
 	public ArrayList<Path> getPath(int[] current, int[] dest){
 		ArrayList<Path> paths=new ArrayList<Path>();
 		BFS(current, dest, paths);
@@ -119,6 +119,7 @@ public class Graph implements Logger{
 		return null;
 	}
 	
+	//NOT IN USE
 	private void BFS(int[] current, int[] dest, ArrayList<Path> paths){
 		
 	}
