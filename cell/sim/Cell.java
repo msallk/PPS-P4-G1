@@ -12,7 +12,7 @@ public class Cell {
 	private static int traders = 10;
 	private static int marbles = 10;
 	private static int dim = 5;
-	private static String mapPath = "cell/map/g1.txt";
+	private static String mapPath = "cell/map/g3-traps.txt";
 	private static String playerPath = "cell/players.list";
 
 	// return game turns

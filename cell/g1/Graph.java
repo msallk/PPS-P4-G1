@@ -76,6 +76,8 @@ public class Graph implements Logger{
 		int y1=current[0];
 		int x2=dest[1];
 		int y2=dest[0];
+		log("curr: "+Arrays.toString(current));
+		log("dest: "+Arrays.toString(dest));
 		ArrayList<Node> nodes=new ArrayList<Node>();
 		if(x1==x2 && y1==y2){
 			nodes.add(mapNodes[y1][x1]);
@@ -108,9 +110,9 @@ public class Graph implements Logger{
 				nodes.add(mapNodes[y1-1][x1]);
 			}
 			if(x1>x2){
-				nodes.add(mapNodes[y1][x1+1]);
-			}else{
 				nodes.add(mapNodes[y1][x1-1]);
+			}else{
+				nodes.add(mapNodes[y1][x1+1]);
 			}
 			return nodes;
 		}
