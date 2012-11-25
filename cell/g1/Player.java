@@ -3,6 +3,7 @@ package cell.g1;
 import java.util.ArrayList;
 import java.util.Random;
 
+
 public class Player implements cell.sim.Player, Logger {
 	
 	boolean DEBUG=true;
@@ -34,10 +35,55 @@ public class Player implements cell.sim.Player, Logger {
 		}
 		*/
 		
-		int[] closest=graph.nearestTrader(traders,location);
+		int[] closest=graph.nearestTrader(location,traders);
 		nextSteps=graph.getNextStep(location, closest);
+		Node chosen=null;
+		int max=0;
+		Direction dir=null;
+		for (Node n: nextSteps)
+		{
+			int color=color(n.getLocation(),board);
+			if(max<sack[color])
+			{
+				max=sack[color];
+				chosen=n;
+			}
+		}
 		
 		
+		if(chosen==null)
+		{
+			System.err.println("Oops! Ran out of marbles, now YOU ARE DEAD!!!!");
+		}
+		else
+		{
+			int di=chosen.getLocation()[0]-location[0];
+			int dj=chosen.getLocation()[0]-location[1];
+			if(di==0 && dj==-1)
+			{
+				 dir=Player.Direction.W;
+			} else if(di==0 && dj==1)
+			{
+				 dir=Player.Direction.E;
+			} else if(di==-1 && dj==-1)
+			{
+				 dir=Player.Direction.NW;
+			} else if(di==-1 && dj==0)
+			{
+				 dir=Player.Direction.N;
+			} else if(di==1 && dj==0)
+			{
+				 dir=Player.Direction.S;
+			} else if(di==1 && dj==1)
+			{
+				 dir=Player.Direction.SE;
+			} else
+			{
+				System.err.println("You CAN'T move that way!!! Either Jiang Wu or Tianchen Yu screwed up!");
+			}
+		}
+		
+		return dir;
 		
 		
 		/*ArrayList<Path> min=null;
@@ -59,12 +105,7 @@ public class Player implements cell.sim.Player, Logger {
 		/*for (;;) {
 			Direction dir = randomDirection();
 			int[] new_location = move(location, dir);*/
-			int color = color(new_location, board); 
-			if (color >= 0 && sack[color] != 0) {
-				savedSack[color]--;
-				return dir;
-			}
-		//}
+
 	}
 
 	private Direction randomDirection()
@@ -82,9 +123,17 @@ public class Player implements cell.sim.Player, Logger {
 
 	public void trade(double[] rate, int[] request, int[] give)
 	{
-		for (int r = 0 ; r != 6 ; ++r)
-			request[r] = give[r] = 0;
 		double rv = 0.0, gv = 0.0;
+		for (int r = 0 ; r != 6 ; ++r)
+		{	request[r] = give[r] = 0;
+			if(savedSack[r] < 3)
+			{
+				request[r]=3-savedSack[r];
+				rv+=rate[r];
+			}
+		}
+		
+		
 		for (int i = 0 ; i != 10 ; ++i) {
 			int j = gen.nextInt(6);
 			if (give[j] == savedSack[j]) break;
