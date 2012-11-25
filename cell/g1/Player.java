@@ -1,5 +1,6 @@
 package cell.g1;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 public class Player implements cell.sim.Player, Logger {
@@ -7,6 +8,8 @@ public class Player implements cell.sim.Player, Logger {
 	boolean DEBUG=true;
 	private Random gen = new Random();
 	private int[] savedSack;
+	private Graph graph=null;
+	private ArrayList<Node> nextSteps= new ArrayList<>();
 
 	public void log(String message){
 		if(DEBUG)
@@ -20,16 +23,48 @@ public class Player implements cell.sim.Player, Logger {
 	public Direction move(int[][] board, int[] location, int[] sack,
 			int[][] players, int[][] traders)
 	{
-		savedSack = copyI(sack);
-		for (;;) {
+		if(graph==null)
+		{
+			graph=new Graph(board);
+		}
+		
+	/*	for (int i=0; i<traders.length; i++ )
+		{
+			nextPerTrader.add(graph.getNextStep(location, traders[i]));
+		}
+		*/
+		
+		int[] closest=graph.nearestTrader(traders,location);
+		nextSteps=graph.getNextStep(location, closest);
+		
+		
+		
+		
+		/*ArrayList<Path> min=null;
+		for (ArrayList<Path> path: pathsPerTrader)
+		{
+			if(min==null)
+			{
+				min=path;
+			}
+			else
+			{
+				if(path.get(0).length<min.get(0).length)
+				{
+					min=path; 
+				}
+			}			
+		}		
+		Path chosenPath=min.get(0);  */		
+		/*for (;;) {
 			Direction dir = randomDirection();
-			int[] new_location = move(location, dir);
-			int color = color(new_location, board);
+			int[] new_location = move(location, dir);*/
+			int color = color(new_location, board); 
 			if (color >= 0 && sack[color] != 0) {
 				savedSack[color]--;
 				return dir;
 			}
-		}
+		//}
 	}
 
 	private Direction randomDirection()
