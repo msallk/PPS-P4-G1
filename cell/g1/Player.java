@@ -24,6 +24,7 @@ public class Player implements cell.sim.Player, Logger {
 	public Direction move(int[][] board, int[] location, int[] sack,
 			int[][] players, int[][] traders)
 	{
+		savedSack=sack;
 		if(graph==null)
 		{
 			graph=new Graph(board);
@@ -58,7 +59,7 @@ public class Player implements cell.sim.Player, Logger {
 		else
 		{
 			int di=chosen.getLocation()[0]-location[0];
-			int dj=chosen.getLocation()[0]-location[1];
+			int dj=chosen.getLocation()[1]-location[1];
 			if(di==0 && dj==-1)
 			{
 				 dir=Player.Direction.W;
@@ -124,27 +125,46 @@ public class Player implements cell.sim.Player, Logger {
 	public void trade(double[] rate, int[] request, int[] give)
 	{
 		double rv = 0.0, gv = 0.0;
+		double lowestRate=2.1;
+		int lowestColor=-1;
+		for(int i=0; i<6; i++)
+		{
+			if(rate[i]<lowestRate)
+			{	lowestRate=rate[i];
+				lowestColor=i;
+			}
+		}
+		
 		for (int r = 0 ; r != 6 ; ++r)
 		{	request[r] = give[r] = 0;
 			if(savedSack[r] < 3)
 			{
-				int count=3-savedSack[r];
-				request[r]=count;
-				rv+=rate[r]*count;
+				int countR=3-savedSack[r];
+				request[r]=request[r]+countR;
+				rv+=rate[r]*countR;
+			}
+			else
+			{
+				if(rate[r]>lowestRate)
+				{
+					int countG=savedSack[r]-3;
+					give[r]=give[r]+countG;
+					gv+=rate[r]*countG;
+				}
 			}
 		}
 		
-		for (int i = 0 ; i != 10 ; ++i) {
+		
+	/*	for (int i = 0 ; i != 10 ; ++i) {
 			int j = gen.nextInt(6);
 			if (give[j] == savedSack[j]) break;
 			give[j]++;
 			gv += rate[j];
-		}
+		} */
 		for (;;) {
-			int j = gen.nextInt(6);
-			if (rv + rate[j] >= gv) break;
-			request[j]++;
-			rv += rate[j];
+			if (rv + rate[lowestColor] >= gv) break;
+			request[lowestColor]++;
+			rv += rate[lowestColor];
 		}
 	}
 
