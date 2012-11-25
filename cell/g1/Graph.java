@@ -18,8 +18,9 @@ public class Graph {
 			}
 	}
 
-	public int[] NearestTrader(int[][] t){
+	public int[] nearestTrader(int[] current, int[][] t){
 		this.traders=t;
+		
 		return null;
 	}
 	
