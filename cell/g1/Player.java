@@ -128,11 +128,11 @@ public class Player implements cell.sim.Player, Logger {
 		{	request[r] = give[r] = 0;
 			if(savedSack[r] < 3)
 			{
-				request[r]=3-savedSack[r];
-				rv+=rate[r];
+				int count=3-savedSack[r];
+				request[r]=count;
+				rv+=rate[r]*count;
 			}
 		}
-		
 		
 		for (int i = 0 ; i != 10 ; ++i) {
 			int j = gen.nextInt(6);
