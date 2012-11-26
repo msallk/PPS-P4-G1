@@ -84,11 +84,13 @@ public class Graph implements Logger{
 			return nodes;
 		}
 		if(y1==y2 && x1>x2){
-			nodes.add(mapNodes[y1][x1-1]);
+			if(mapNodes[y1][x1-1].color!=-1)
+				nodes.add(mapNodes[y1][x1-1]);
 			return nodes;
 		}
 		if(y1==y2 && x1<x2){
-			nodes.add(mapNodes[y1][x1+1]);
+			if(mapNodes[y1][x1+1].color!=-1)
+				nodes.add(mapNodes[y1][x1+1]);
 			return nodes;
 		}
 		if(y1!=y2){
@@ -105,14 +107,22 @@ public class Graph implements Logger{
 				return nodes;
 			}
 			if(y1<y2){
-				nodes.add(mapNodes[y1+1][x1]);
+				if(y1<mapNodes.length)
+					if(mapNodes[y1+1][x1].color!=-1)
+						nodes.add(mapNodes[y1+1][x1]);
 			}else{
-				nodes.add(mapNodes[y1-1][x1]);
+				if(y1>0)
+					if(mapNodes[y1-1][x1].color!=-1)
+						nodes.add(mapNodes[y1-1][x1]);
 			}
 			if(x1>x2){
-				nodes.add(mapNodes[y1][x1-1]);
+				if(x1>0)
+					if(mapNodes[y1][x1-1].color!=-1)
+						nodes.add(mapNodes[y1][x1-1]);
 			}else{
-				nodes.add(mapNodes[y1][x1+1]);
+				if(x1<mapNodes[0].length)
+					if(mapNodes[y1][x1+1].color!=-1)
+						nodes.add(mapNodes[y1][x1+1]);
 			}
 			return nodes;
 		}

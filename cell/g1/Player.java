@@ -45,6 +45,9 @@ public class Player implements cell.sim.Player, Logger {
 		for (Node n: nextSteps)
 		{
 			int color=color(n.getLocation(),board);
+			if(color==-1){
+				log("Potential Dest Node: "+Arrays.toString(n.getLocation()));
+			}
 			if(max<sack[color])
 			{
 				max=sack[color];
@@ -140,9 +143,9 @@ public class Player implements cell.sim.Player, Logger {
 		
 		for (int r = 0 ; r != 6 ; ++r)
 		{	request[r] = give[r] = 0;
-			if(savedSack[r] < 3)
+			if(savedSack[r] < 5)
 			{
-				int countR=3-savedSack[r];
+				int countR=5-savedSack[r];
 				request[r]=request[r]+countR;
 				rv+=rate[r]*countR;
 			}
@@ -161,10 +164,10 @@ public class Player implements cell.sim.Player, Logger {
 		{
 			for(int i=0; i<6; i++)
 			{
-				if(savedSack[i]>3) //only one color has a count that is more than 3
+				if(savedSack[i]>5) //only one color has a count that is more than 3
 				{
 					int n=(int)((rv-gv)/rate[i]+1);
-					int maxGivable=savedSack[i]-3;
+					int maxGivable=savedSack[i]-5;
 					if(maxGivable>n)
 					{
 						give[i]+=n;
