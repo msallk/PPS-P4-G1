@@ -252,5 +252,10 @@ public class Player implements cell.sim.Player, Logger {
 			b[i] = a[i];
 		return b;
 	}
+	
+	//[TODO] Shane
+	private boolean canWin(){
+		return true; 
+	}
 
 }
