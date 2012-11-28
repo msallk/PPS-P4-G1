@@ -20,6 +20,21 @@ public class Graph implements Logger{
 				mapNodes[i][j]=new Node(i,j,map[i][j]);
 			}
 	}
+	
+	/*
+	 * Method returns the number of each colored tile on
+	 * the map.
+	 */
+	public int[] graphColors(){
+		int[] graphColors = { 0, 0, 0, 0, 0, 0};
+		for (int i = 0; i < map.length; i++) {
+			for (int j = 0; j < map[0].length; j++) {
+				int color = map[i][j];
+				graphColors[colors]++;
+			}
+		}
+		return graphColors;
+	}
 
 	public int[] nearestTrader(int[] current, int[][] t){
 		this.traders=t;
