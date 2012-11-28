@@ -1,3 +1,4 @@
 *.class
 cell/sim/webpages/*
+*.zip
 *.list
