@@ -11,9 +11,9 @@ public class Cell {
 	private static int turns = 100;
 	private static int traders = 10;
 	private static int marbles = 10;
-	private static int dim = 5;
-	private static String mapPath = "cell/map/g3-traps.txt";
-	private static String playerPath = "cell/players.list";
+	private static boolean recompile = false;
+	private static String mapPath = "g3-traps.txt";
+	private static String playerPath = "players.list";
 
 	// return game turns
 	public static int gameTurns() { return turns; }
@@ -38,47 +38,55 @@ public class Cell {
 	}
 
 	// compile and load players dynamically
-	private static Player[] loadPlayers(String txtPath) {
+	private static Player[] loadPlayers(String txtPath) throws Exception {
 		// list of players
 		List <Player> playersList = new LinkedList <Player> ();
-		try {
-			// get file of players
-			BufferedReader in = new BufferedReader(new FileReader(new File(txtPath)));
-			// get tools
-			//ClassLoader loader = ToolProvider.getSystemToolClassLoader();
-			ClassLoader loader = ClassLoader.getSystemClassLoader();
-			JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-			StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
-			// load players
-			String group;
-			while ((group = in.readLine()) != null) {
-				System.err.println("Group: " + group);
+		// get file of players
+		BufferedReader in = new BufferedReader(new FileReader(new File(txtPath)));
+		// get tools
+		ClassLoader loader = Cell.class.getClassLoader();
+		if (loader == null) throw new Exception("Cannot load class loader");
+		JavaCompiler compiler = null;
+		StandardJavaFileManager fileManager = null;
+		// get separator
+		String sep = File.separator;
+		// load players
+		String group;
+		while ((group = in.readLine()) != null) {
+			System.err.println("Group: " + group);
+			// search for compiled files
+			File classFile = new File("cell" + sep + group + sep + "Player.class");
+			System.err.println(classFile.getAbsolutePath());
+			if (!classFile.exists() || recompile) {
 				// delete all class files
-				List <File> classFiles = directoryFiles("cell/" + group, ".class");
+				List <File> classFiles = directoryFiles("cell" + sep + group, ".class");
 				System.err.print("Deleting " + classFiles.size() + " class files...   ");
 				for (File file : classFiles)
 					file.delete();
 				System.err.println("OK");
+				if (compiler == null) compiler = ToolProvider.getSystemJavaCompiler();
+				if (compiler == null) throw new Exception("Cannot load compiler");
+				if (fileManager == null) fileManager = compiler.getStandardFileManager(null, null, null);
+				if (fileManager == null) throw new Exception("Cannot load file manager");
 				// compile all files
-				List <File> javaFiles = directoryFiles("cell/" + group, ".java");
+				List <File> javaFiles = directoryFiles("cell" + sep + group, ".java");
 				System.err.print("Compiling " + javaFiles.size() + " source files...   ");
 				Iterable<? extends JavaFileObject> units = fileManager.getJavaFileObjectsFromFiles(javaFiles);
 				boolean ok = compiler.getTask(null, fileManager, null, null, null, units).call();
-				if (!ok) throw new Exception("compile error");
+				if (!ok) throw new Exception("Compile error");
 				System.err.println("OK");
-				// load class
-				System.err.print("Loading player class...   ");
-				Class playerClass = loader.loadClass("cell." + group + ".Player");
-				System.err.println("OK");
-				// set name of player and append on list
-				Player player = (Player) playerClass.newInstance();
-				playersList.add(player);
 			}
-			in.close();
-		} catch (Exception e) {
-			e.printStackTrace(System.err);
-			return null;
+			// load class
+			System.err.print("Loading player class...   ");
+			Class playerClass = loader.loadClass("cell." + group + ".Player");
+			System.err.println("OK");
+			// set name of player and append on list
+			Player player = (Player) playerClass.newInstance();
+			if (player == null)
+				throw new Exception("Load error");
+			playersList.add(player);
 		}
+		in.close();
 		return playersList.toArray(new Player[0]);
 	}
 
@@ -141,24 +149,26 @@ public class Cell {
 
 	public static void main(String[] args) throws Exception
 	{
-		// board size
-		if (args.length > 1)
-			dim = Integer.parseInt(args[1]);
 		// starting marbles
-		if (args.length > 2)
-			marbles = Integer.parseInt(args[2]);
+		if (args.length > 1)
+			marbles = Integer.parseInt(args[1]);
 		// traders
-		if (args.length > 3)
-			traders = Integer.parseInt(args[3]);
+		if (args.length > 2)
+			traders = Integer.parseInt(args[2]);
 		// game turns
-		if (args.length > 4)
-			turns = Integer.parseInt(args[4]);
+		if (args.length > 3)
+			turns = Integer.parseInt(args[3]);
 		// map path
-		if (args.length > 5)
-			mapPath = args[5];
+		String sep = File.separator;
+		if (args.length > 4)
+			mapPath = args[4];
+		else
+			mapPath = "cell" + sep + "map" + sep + mapPath;
 		// players path
-		if (args.length > 6)
-			playerPath = args[6];
+		if (args.length > 5)
+			playerPath = args[5];
+		else
+			playerPath = "cell" + sep + playerPath;
 		Cell game = new Cell();
 		game.printPlayers();
 		game.printTraders();
@@ -173,6 +183,9 @@ public class Cell {
 		}
 		for (File f : directoryFiles("cell/sim/webpages", ".html"))
 			f.delete();
+		FileOutputStream out = new FileOutputStream("cell/sim/webpages/index.html");
+		out.write(game.state().getBytes());
+		out.close();
 		for (int t = 1 ; t <= turns; ++t) {
 			boolean f = true;
 			if (server != null) do {
@@ -184,7 +197,7 @@ public class Cell {
 				f = false;
 			} while (req == 'B');
 			boolean end = game.next();
-			FileOutputStream out = new FileOutputStream("cell/sim/webpages/" + t + ".html");
+			out = new FileOutputStream("cell/sim/webpages/" + t + ".html");
 			out.write(game.state().getBytes());
 			out.close();
 			game.printPlayers();
@@ -192,11 +205,10 @@ public class Cell {
 		}
 		game.rank();
 		if (server != null) {
-			server.replyState(game.state(), refresh);
+			server.replyState(game.state(), 0);
 			while ((req = server.nextRequest(2000)) == 'I');
-			if (req != 'X')
-				throw new Exception("Invalid last request");
 		}
+		server.close();
 	}
 
 	private Player[] players;
@@ -209,6 +221,7 @@ public class Cell {
 	private int[] round;
 	private int[] count;
 	private boolean[] in;
+	private int dim;
 	private int turn;
 	private int trades;
 	private int conflicts;
@@ -218,30 +231,84 @@ public class Cell {
 	private String state()
 	{
 		int pixels = 800;
-		String title = "PPS Cell";
+		String title = "CELL";
 		StringBuffer buf = new StringBuffer("");
 		buf.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
 		buf.append("<html xmlns=\"http://www.w3.org/1999/xhtml\" dir=\"ltr\" lang=\"en-US\" xml:lang=\"en\">\n");
 		buf.append("<head>\n");
+		buf.append(" <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-7\" />\n");
+		buf.append(" <link rel=\"shortcut icon\" href=\"cell/icon.ico\" />\n");
 		buf.append(" <title>" + title + "</title>\n");
-		buf.append(" <style>a:hover {color:red;}</style>\n");
+		buf.append(" <style type=\"text/css\">\n");
+		buf.append("  a:link {text-decoration: none; color: blue;}\n");
+		buf.append("  a:visited {text-decoration: none; color: blue;}\n");
+		buf.append("  a:hover {text-decoration: none; color: red;}\n");
+		buf.append("  a:active {text-decoration: none; color: blue;}\n");
+		buf.append(" </style>\n");
 		buf.append("</head>\n");
 		buf.append("<body>\n");
-		buf.append(" <div style=\"width:" + (pixels + 550) + "px; margin-left:auto; margin-right: auto;\">\n");
-		buf.append("  <div style=\"width: 200px; float: left;\">\n");
-		buf.append("   <div style=\"width: 200px; height: 120px;\"></div>\n");
+		// general part
+		buf.append(" <div style=\"width:" + (pixels + 400) + "px; margin-left:auto; margin-right: auto;\">\n");
+		// left part
+		buf.append("  <div style=\"width: 400px; float: left;\">\n");
+		// space above
+		buf.append("   <div style=\"width: 400px; height: 25px;\"></div>\n");
 		buf.append("   <div style=\"clear:both;\"></div>\n");
-		buf.append("   <a href=\"play\"><div style=\"width: 200px; height: 70px; float:left; cursor: pointer; text-align: center; font-size: 40px;");
-		buf.append("                              color: black; font-weight: bold; font-family: 'Comic Sans MS', cursive, sans-serif\">Play</div></a>\n");
-		buf.append("   <div style=\"clear:both;\"></div>\n");
-		buf.append("   <a href=\"stop\"><div style=\"width: 200px; height: 70px; float:left; cursor: pointer; text-align: center; font-size: 40px;");
-		buf.append("                              color: black; font-weight: bold; font-family: 'Comic Sans MS', cursive, sans-serif\">Stop</div></a>\n");
-		buf.append("   <div style=\"clear:both;\"></div>\n");
-		buf.append("   <a href=\"step\"><div style=\"width: 200px; height: 70px; float:left; cursor: pointer; text-align: center; font-size: 40px;");
-		buf.append("                              color: black; font-weight: bold; font-family: 'Comic Sans MS', cursive, sans-serif\">Step</div></a>\n");
-		buf.append("  </div>\n");
-		buf.append("  <div style=\"width:" + pixels + "px; float: left;\">\n");
+		// array of results below buttons
+		buf.append("   <div style=\"width: 400px; float: left;\">\n");
+		// empty up left square
+		buf.append("    <div style=\"width: 40px; height: 50px; float:left;\"></div>\n");
+		// color squares
 		String[] colors = {"red", "green", "blue", "yellow", "purple", "orange"};
+		for (String color : colors)
+			buf.append("    <div style=\"width: 44px; height: 44px; float:left; border: 3px solid black; background-color: " + color + "\"></div>\n");
+		// empty up right square
+		buf.append("    <div style=\"width: 60px; height: 50px; float:left;\"></div>\n");
+		buf.append("    <div style=\"clear:both;\"></div>\n");
+		// result lines
+		for (int p = 0 ; p != players.length ; ++p) {
+			// player name
+			buf.append("    <div style=\"width: 34px; height: 44px; float:left; border: 3px solid black; text-align: center;");
+			if (in[p]) buf.append("\n");
+			else buf.append(" text-decoration: line-through;\n");
+			buf.append("                font-size: 25px; font-weight: bold; font-family: 'Comic Sans MS', cursive, sans-serif\">" + (p + 1) + "</div>\n");
+			int total = 0;
+			// marble score per color
+			buf.append("    <div style=\"width: 294px; height: 44px; float: left; border: 3px solid black;\">\n");
+			for (int r = 0 ; r != 6 ; ++r) {
+				String s = "";
+				if (in[p]) s += sacks[p][r];
+				buf.append("     <div style=\"width: 49px; height: 44px; float:left; text-align: center; font-size: 20px;\n");
+				buf.append("                 font-weight: bold; font-family: 'Comic Sans MS', cursive, sans-serif\">" + s + "</div>\n");
+				total += sacks[p][r];
+			}
+			buf.append("    </div>\n");
+			// total marbles
+			buf.append("    <div style=\"width: 54px; height: 44px; float:left; border: 3px solid black; text-align: center;\n");
+			buf.append("                font-size: 20px; font-weight: bold; font-family: 'Comic Sans MS', cursive, sans-serif\">" + total + "</div>\n");
+			buf.append("    <div style=\"clear:both;\"></div>\n");
+		}
+		// close result array
+		buf.append("   </div>\n");
+		// space between buttons and array
+		buf.append("   <div style=\"width: 400px; height: 100px; float:left;\"></div>\n");
+		buf.append("   <div style=\"clear:both;\"></div>\n");
+		// button 1
+		buf.append("   <div style=\"width: 400px; height: 70px; float:left; cursor: pointer; text-align: center; font-size: 40px;\n");
+		buf.append("               font-weight: bold; font-family: 'Comic Sans MS', cursive, sans-serif\"><a href=\"play\">Play</a></div>\n");
+		buf.append("   <div style=\"clear:both;\"></div>\n");
+		// button 2
+		buf.append("   <div style=\"width: 400px; height: 70px; float:left; cursor: pointer; text-align: center; font-size: 40px;\n");
+		buf.append("               font-weight: bold; font-family: 'Comic Sans MS', cursive, sans-serif\"><a href=\"stop\">Stop</a></div>\n");
+		buf.append("   <div style=\"clear:both;\"></div>\n");
+		// button 3
+		buf.append("   <div style=\"width: 400px; height: 70px; float:left; cursor: pointer; text-align: center; font-size: 40px;\n");
+		buf.append("               font-weight: bold; font-family: 'Comic Sans MS', cursive, sans-serif\"><a href=\"step\">Step</a></div>\n");
+		buf.append("   <div style=\"clear:both;\"></div>\n");
+		// close left part of page
+		buf.append("  </div>\n");
+		// hexagon
+		buf.append("  <div style=\"width:" + pixels + "px; float: left;\">\n");
 		int dim2_1 = board.length;
 		int dim = (dim2_1 + 1) >> 1;
 		int b = (pixels / dim2_1) - 6;
@@ -287,26 +354,9 @@ public class Cell {
 			buf.append("   </div>\n");
 			buf.append("   <div style=\"clear:both;\"></div>\n");
 		}
+		// close right side of page
 		buf.append("  </div>\n");
-		buf.append("  <div style=\"width: 350px; float: left;\">\n");
-		buf.append("   <div style=\"width: 350px; height: 50px; float:left;\"></div>");
-		buf.append("   <div style=\"clear:both;\"></div>\n");
-		buf.append("   <div style=\"width: 50px; height: 50px; float:left;\"></div>");
-		for (String color : colors)
-			buf.append("   <div style=\"width: 44px; height: 44px; float:left; border: 3px solid black; background-color: " + color + "\"></div>");
-		buf.append("   <div style=\"clear:both;\"></div>\n");
-		for (int p = 0 ; p != players.length ; ++p) {
-			buf.append("   <div style=\"width: 44px; height: 44px; float:left; border: 3px solid black; text-align: center;");
-			buf.append("               font-size: 25px; font-weight: bold; font-family: 'Comic Sans MS', cursive, sans-serif\">" + (p + 1) + "</div>\n");
-			buf.append("   <div style=\"width: 294px; height: 44px; float: left; border: 3px solid black;\">\n");
-			for (int r = 0 ; r != 6 ; ++r) {
-				buf.append("    <div style=\"width: 49px; height: 44px; float:left; text-align: center; font-size: 20px;");
-				buf.append("                font-weight: bold; font-family: 'Comic Sans MS', cursive, sans-serif\">" + sacks[p][r] + "</div>\n");
-			}
-			buf.append("   </div>\n");
-			buf.append("   <div style=\"clear:both;\"></div>\n");
-		}
-		buf.append("  </div>\n");
+		// close page
 		buf.append(" </div>\n");
 		buf.append("</body>\n");
 		buf.append("</html>\n");
@@ -660,14 +710,14 @@ public class Cell {
 		} else if (dir == Player.Direction.SE) {
 			di = 1;
 			dj = 1;
-		} else
-			throw new Exception("Invalid movement: "+Arrays.toString(location));
+		} else return null;
 		int[] new_location = {i + di, j + dj};
 		return new_location;
 	}
 
 	private static int color(int[] location, int[][] board)
 	{
+		if (location == null) return -1;
 		int i = location[0];
 		int j = location[1];
 		int dim2_1 = board.length;

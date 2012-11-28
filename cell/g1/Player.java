@@ -103,40 +103,6 @@ public class Player implements cell.sim.Player, Logger {
 		savedSack[chosen.color]--;
 		return dir;
 		
-		
-		/*ArrayList<Path> min=null;
-		for (ArrayList<Path> path: pathsPerTrader)
-		{
-			if(min==null)
-			{
-				min=path;
-			}
-			else
-			{
-				if(path.get(0).length<min.get(0).length)
-				{
-					min=path; 
-				}
-			}			
-		}		
-		Path chosenPath=min.get(0);  */		
-		/*for (;;) {
-			Direction dir = randomDirection();
-			int[] new_location = move(location, dir);*/
-
-	}
-
-	private Direction randomDirection()
-	{
-		switch(gen.nextInt(6)) {
-		case 0: return Direction.E;
-		case 1: return Direction.W;
-		case 2: return Direction.SE;
-		case 3: return Direction.S;
-		case 4: return Direction.N;
-		case 5: return Direction.NW;
-		default: return null;
-		}
 	}
 
 	public void trade(double[] rate, int[] request, int[] give)

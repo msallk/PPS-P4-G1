@@ -1,25 +1,50 @@
-package cell.dumb;
+package cell.g2;
 
 import java.util.Random;
 
-public class Player implements cell.sim.Player {
-
+public class Player implements cell.sim.Player 
+{
 	private Random gen = new Random();
 	private int[] savedSack;
 	private static int versions = 0;
 	private int version = ++versions;
 
-	public String name() { return "Dumb" + (versions > 1 ? " v" + version : ""); }
-
-	public Direction move(int[][] board, int[] location, int[] sack,
-	                      int[][] players, int[][] traders)
+	public String name() 
+	{ 
+		return "g2" + (version != 1 ? " v" + version : ""); 
+	}
+	
+	public Direction move(int[][] board, int[] location, int[] sack, int[][] players, int[][] traders)
 	{
+		//Board[][] contains color of each of the squares in the map
+		//location[] contains our location
+		//sack[] contains number of ball of each color
+		//player[][] contains location of all players at that point of the game when u are moving
+		//ie if you are the last player of the game player[][] will contain the location of the players after they have moved for the turn
+		//traders[][] contains location of all lep when it is our turn to move
+		try
+		{
+			Floyd.getShortestPaths(board);
+		}
+		catch(Exception e)
+		{
+			System.out.println(e);
+		}
+		//		Print.printStatement("\n");
+//		Print.printStatement("\n");
+//		for(int i=0;i<location.length;i++)
+//			Print.printStatement(location[i]+"\t");
+//		Print.printStatement("\n");
+//		Print.printStatement("\n");
 		savedSack = copyI(sack);
-		for (;;) {
+		for (;;) 
+		{
+			
 			Direction dir = randomDirection();
 			int[] new_location = move(location, dir);
 			int color = color(new_location, board);
-			if (color >= 0 && sack[color] != 0) {
+			if (color >= 0 && sack[color] != 0) 
+			{
 				savedSack[color]--;
 				return dir;
 			}
@@ -28,7 +53,8 @@ public class Player implements cell.sim.Player {
 
 	private Direction randomDirection()
 	{
-		switch(gen.nextInt(6)) {
+		switch(gen.nextInt(6)) 
+		{
 			case 0: return Direction.E;
 			case 1: return Direction.W;
 			case 2: return Direction.SE;
@@ -44,13 +70,15 @@ public class Player implements cell.sim.Player {
 		for (int r = 0 ; r != 6 ; ++r)
 			request[r] = give[r] = 0;
 		double rv = 0.0, gv = 0.0;
-		for (int i = 0 ; i != 10 ; ++i) {
+		for (int i = 0 ; i != 10 ; ++i) 
+		{
 			int j = gen.nextInt(6);
 			if (give[j] == savedSack[j]) break;
 			give[j]++;
 			gv += rate[j];
 		}
-		for (;;) {
+		for (;;) 
+		{
 			int j = gen.nextInt(6);
 			if (rv + rate[j] >= gv) break;
 			request[j]++;
@@ -63,25 +91,36 @@ public class Player implements cell.sim.Player {
 		int di, dj;
 		int i = location[0];
 		int j = location[1];
-		if (dir == Player.Direction.W) {
+		if (dir == Player.Direction.W) 
+		{
 			di = 0;
 			dj = -1;
-		} else if (dir == Player.Direction.E) {
+		} 
+		else if (dir == Player.Direction.E) 
+		{
 			di = 0;
 			dj = 1;
-		} else if (dir == Player.Direction.NW) {
+		} 
+		else if (dir == Player.Direction.NW) 
+		{
 			di = -1;
 			dj = -1;
-		} else if (dir == Player.Direction.N) {
+		} 
+		else if (dir == Player.Direction.N) 
+		{
 			di = -1;
 			dj = 0;
-		} else if (dir == Player.Direction.S) {
+		} 
+		else if (dir == Player.Direction.S) 
+		{
 			di = 1;
 			dj = 0;
-		} else if (dir == Player.Direction.SE) {
+		} else if (dir == Player.Direction.SE) 
+		{
 			di = 1;
 			dj = 1;
-		} else return null;
+		} 
+		else return null;
 		int[] new_location = {i + di, j + dj};
 		return new_location;
 	}

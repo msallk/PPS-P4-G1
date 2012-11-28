@@ -58,6 +58,7 @@ class HTTPServer {
 		for (int i = 0 ; rsize < 0 && i != size ; ++i)
 			if (data[i] == '\r')
 				rsize = i;
+		if (rsize < 0) throw new Exception("Invalid HTTP request");
 		String requestLine = new String(data, 0, rsize);
 		System.err.println(requestLine);
 		String[] requestParts = requestLine.split(" ");
@@ -84,7 +85,7 @@ class HTTPServer {
 		}
 		FileInputStream in = new FileInputStream(file);
 		String head = "HTTP/1.0 200 OK\r\n";
-		head += "Content-Length: " + file.length() + "\r\n\r\n";
+		head += "Content-Length: " + file.length() + "\r\n";
 		OutputStream out = connection.getOutputStream();
 		out.write(head.getBytes());
 		byte[] buf = new byte [4096]; int i;
@@ -119,7 +120,6 @@ class HTTPServer {
 		OutputStream out = connection.getOutputStream();
 		String head = "HTTP/1.0 200 OK\r\n";
 		if (refresh > 0) head += "Refresh: " + refresh + "; url=http://localhost:" + port + "/step\r\n";
-		head += "Content-Type: text/html; charset=UTF-8\r\n";
 		head += "Content-Length: " + content.length() + "\r\n\r\n";
 		out.write(head.getBytes());
 		out.write(content.getBytes());
