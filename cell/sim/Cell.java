@@ -10,7 +10,7 @@ public class Cell {
 	private static boolean gui = true;
 	private static int turns = 100;
 	private static int traders = 10;
-	private static int marbles = 10;
+	private static int marbles = 15;
 	private static boolean recompile = false;
 	private static String mapPath = "g3-traps.txt";
 	private static String playerPath = "players.list";

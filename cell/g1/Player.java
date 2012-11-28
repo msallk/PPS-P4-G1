@@ -7,7 +7,7 @@ import java.util.Random;
 
 public class Player implements cell.sim.Player, Logger {
 	
-	boolean DEBUG= true;
+	boolean DEBUG= false;
 	private int thresHold = 0;
 	private int iniMarble = 0;
 	private Random gen = new Random();
@@ -34,7 +34,10 @@ public class Player implements cell.sim.Player, Logger {
 			int n = (3*l*l+1)/4;
 			int p = players.length;
 			int t = traders.length;
+			//thresHold= (int)(l/3*Math.sqrt(p/t));
 			thresHold = (int)(Math.sqrt(n*p/t)*1.414/2) + 1;
+			if(thresHold >= iniMarble)
+				thresHold = iniMarble - 2;
 		}
 		 
 		savedSack=sack;
@@ -100,7 +103,8 @@ public class Player implements cell.sim.Player, Logger {
 				System.err.println("You CAN'T move that way!!! Either Jiang Wu or Tianchen Yu screwed up!");
 			}
 		}
-		savedSack[chosen.color]--;
+		if(chosen!=null) 
+			savedSack[chosen.color]--;
 		return dir;
 		
 	}
@@ -109,14 +113,13 @@ public class Player implements cell.sim.Player, Logger {
 	{
 		log("data" + iniMarble);
 		log("threshold" + thresHold);
+		int highestIdx = -1;
+		int highest = 0;
+		for(int i = 0; i<6; i++){
+			if(savedSack[i]>highest){highest=savedSack[i]; highestIdx = i;}				
+		}
 		if(canWin(rate, savedSack))
 		{
-			int highestIdx = -1;
-			int highest = 0;
-			double base =0.0;
-			for(int i = 0; i<6; i++){
-				if(savedSack[i]>highest){highest=savedSack[i]; highestIdx = i;}				
-			}
 			for(int i=0; i<6 ;i++){
 				if(i==highestIdx)
 					give[i] = savedSack[i] - iniMarble*4;
@@ -142,9 +145,9 @@ public class Player implements cell.sim.Player, Logger {
 				lowestColor=i;
 			}
 		}
-		
 		for (int r = 0 ; r != 6 ; ++r)
-		{	request[r] = give[r] = 0;
+		{	
+			request[r] = give[r] = 0;
 			if(savedSack[r] < thresHold)
 			{
 				int countR=thresHold-savedSack[r];
@@ -162,10 +165,16 @@ public class Player implements cell.sim.Player, Logger {
 			}
 		}
 		int count=0;
-		while(gv<rv)
+		while(rv>gv)
 		{
-			if(count>20)
+			for(int i = 0; i<6; i++){
+				request[i] =0;
+				give[i] = 0;
+			}
+			if(count>5)
 				break;
+			else ++count;
+			/*
 			else ++count;
 			for(int i=0; i<6; i++)
 			{
@@ -192,44 +201,24 @@ public class Player implements cell.sim.Player, Logger {
 						} 
 					}
 				}
-			}
+			}*/
 			//System.out.print("infinite loops!!!!!!!!");
 		}
-		
+		if(rate[highestIdx]/rate[lowestColor] < 1.2 
+				&& 
+				savedSack[highestIdx]< (int)(iniMarble*24/1.25)){
+			for(int i = 0; i<6; i++){
+				request[i] =0;
+				give[i] = 0;
+				}
+			rv = 0;
+			gv = 0;
+		}
 		while (true) {
-			log("sec...");
 			if (rv + rate[lowestColor] >= gv) break;
 			request[lowestColor]++;
 			rv += rate[lowestColor];
 		}
-	}
-
-	private static int[] move(int[] location, Player.Direction dir)
-	{
-		int di, dj;
-		int i = location[0];
-		int j = location[1];
-		if (dir == Player.Direction.W) {
-			di = 0;
-			dj = -1;
-		} else if (dir == Player.Direction.E) {
-			di = 0;
-			dj = 1;
-		} else if (dir == Player.Direction.NW) {
-			di = -1;
-			dj = -1;
-		} else if (dir == Player.Direction.N) {
-			di = -1;
-			dj = 0;
-		} else if (dir == Player.Direction.S) {
-			di = 1;
-			dj = 0;
-		} else if (dir == Player.Direction.SE) {
-			di = 1;
-			dj = 1;
-		} else return null;
-		int[] new_location = {i + di, j + dj};
-		return new_location;
 	}
 
 	private static int color(int[] location, int[][] board)
@@ -242,15 +231,6 @@ public class Player implements cell.sim.Player, Logger {
 		return board[i][j];
 	}
 
-	private int[] copyI(int[] a)
-	{
-		int[] b = new int [a.length];
-		for (int i = 0 ; i != a.length ; ++i)
-			b[i] = a[i];
-		return b;
-	}
-	
-	//[TODO] Shane
 	private boolean canWin(double[] rt,  int[] sack){
 		int highestIdx = -1;
 		int highest = 0;

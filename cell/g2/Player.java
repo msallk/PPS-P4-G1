@@ -28,7 +28,7 @@ public class Player implements cell.sim.Player
 		}
 		catch(Exception e)
 		{
-			System.out.println(e);
+			//System.out.println(e);
 		}
 		//		Print.printStatement("\n");
 //		Print.printStatement("\n");
