@@ -30,7 +30,7 @@ public class Graph implements Logger{
 		for (int i = 0; i < map.length; i++) {
 			for (int j = 0; j < map[0].length; j++) {
 				int color = map[i][j];
-				graphColors[colors]++;
+				graphColors[color]++;
 			}
 		}
 		return graphColors;
@@ -81,7 +81,6 @@ public class Graph implements Logger{
 	//NOT IN USE
 	public ArrayList<Path> getPath(int[] current, int[] dest){
 		ArrayList<Path> paths=new ArrayList<Path>();
-		BFS(current, dest, paths);
 		Collections.sort(paths);
 		return paths;
 	}
@@ -122,7 +121,7 @@ public class Graph implements Logger{
 				return nodes;
 			}
 			if(y1<y2){
-				if(y1<mapNodes.length)
+				if(y1<mapNodes.length-1)
 					if(mapNodes[y1+1][x1].color!=-1)
 						nodes.add(mapNodes[y1+1][x1]);
 			}else{
@@ -135,7 +134,7 @@ public class Graph implements Logger{
 					if(mapNodes[y1][x1-1].color!=-1)
 						nodes.add(mapNodes[y1][x1-1]);
 			}else{
-				if(x1<mapNodes[0].length)
+				if(x1<mapNodes[0].length-1)
 					if(mapNodes[y1][x1+1].color!=-1)
 						nodes.add(mapNodes[y1][x1+1]);
 			}

@@ -45,7 +45,7 @@ public class Player implements cell.sim.Player {
 			request[r] = give[r] = 0;
 		double rv = 0.0, gv = 0.0;
 		for (int i = 0 ; i != 10 ; ++i) {
-int j = gen.nextInt(6);
+			int j = gen.nextInt(6);
 			if (give[j] == savedSack[j]) break;
 			give[j]++;
 			gv += rate[j];

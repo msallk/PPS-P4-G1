@@ -12,7 +12,7 @@ public class Cell {
 	private static int traders = 10;
 	private static int marbles = 10;
 	private static int dim = 5;
-	private static String mapPath = "cell/map/g1.txt";
+	private static String mapPath = "cell/map/g3-traps.txt";
 	private static String playerPath = "cell/players.list";
 
 	// return game turns
@@ -661,7 +661,7 @@ public class Cell {
 			di = 1;
 			dj = 1;
 		} else
-			throw new Exception("Invalid movement");
+			throw new Exception("Invalid movement: "+Arrays.toString(location));
 		int[] new_location = {i + di, j + dj};
 		return new_location;
 	}

@@ -4,10 +4,10 @@ import java.util.ArrayList;
 
 public class Path implements Comparable{
 	int length;
-	ArrayList<Integer[]> locs;
+	ArrayList<Node> locs;
 	
-	public void add(int[] loc){
-		
+	public void add(Node loc){
+		locs.add(loc);
 	}
 
 	@Override

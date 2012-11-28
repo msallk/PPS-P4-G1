@@ -100,7 +100,7 @@ public class Player implements cell.sim.Player, Logger {
 				System.err.println("You CAN'T move that way!!! Either Jiang Wu or Tianchen Yu screwed up!");
 			}
 		}
-
+		savedSack[chosen.color]--;
 		return dir;
 		
 		
@@ -141,8 +141,8 @@ public class Player implements cell.sim.Player, Logger {
 
 	public void trade(double[] rate, int[] request, int[] give)
 	{
-		System.out.println("data" + iniMarble);
-		System.out.println("threshold" + thresHold);
+		log("data" + iniMarble);
+		log("threshold" + thresHold);
 		if(canWin(rate, savedSack))
 		{
 			int highestIdx = -1;
@@ -163,11 +163,8 @@ public class Player implements cell.sim.Player, Logger {
 				else
 					request[i] = iniMarble*4 - savedSack[i];;
 			}
-			
-			
+			return;
 		}
-		else
-		{	
 			
 		double rv = 0.0, gv = 0.0;
 		double lowestRate=2.1;
@@ -198,9 +195,12 @@ public class Player implements cell.sim.Player, Logger {
 				}
 			}
 		}
-		
+		int count=0;
 		while(gv<rv)
 		{
+			if(count>20)
+				break;
+			else ++count;
 			for(int i=0; i<6; i++)
 			{
 				if(savedSack[i]>thresHold) //only one color has a count that is more than threshold
@@ -230,20 +230,11 @@ public class Player implements cell.sim.Player, Logger {
 			//System.out.print("infinite loops!!!!!!!!");
 		}
 		
-	/*	for (int i = 0 ; i != 10 ; ++i) {
-=======
-		for (int i = 0 ; i != 10 ; ++i) {
->>>>>>> Stashed changes
-			int j = gen.nextInt(6);
-			if (give[j] == savedSack[j]) break;
-			give[j]++;
-			gv += rate[j];
-		} */
 		while (true) {
+			log("sec...");
 			if (rv + rate[lowestColor] >= gv) break;
 			request[lowestColor]++;
 			rv += rate[lowestColor];
-		}
 		}
 	}
 
