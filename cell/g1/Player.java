@@ -13,6 +13,7 @@ public class Player implements cell.sim.Player, Logger {
 	private Random gen = new Random();
 	private int[] savedSack;
 	private Graph graph=null;
+	private RouteAnalyzer routeAnalyzer=null;
 	private ArrayList<Node> nextSteps= new ArrayList<Node>();
 
 	public void log(String message){
@@ -47,13 +48,17 @@ public class Player implements cell.sim.Player, Logger {
 			graph=new Graph(board);
 		}
 		
+		if(routeAnalyzer==null)
+			routeAnalyzer=new RouteAnalyzer(graph);
+		
 	/*	for (int i=0; i<traders.length; i++ )
 		{
 			nextPerTrader.add(graph.getNextStep(location, traders[i]));
 		}
 		*/
 		
-		int[] closest=graph.nearestTrader(location,traders);
+		//int[] closest=graph.nearestTrader(location,traders);
+		int[] closest=routeAnalyzer.getDestination2(location,sack, players, traders);
 		nextSteps=graph.getNextStep(location, closest);
 		Node chosen=null;
 		int max=0;
