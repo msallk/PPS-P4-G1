@@ -112,9 +112,6 @@ public class Player implements cell.sim.Player, Logger {
 			if(finalThreshold[i]==0 && thresholdRatio[i]!=0)
 				finalThreshold[i] = 1;
 		}
-		for(int i=0; i<6; i++){
-		System.out.println("**" + thresholdRatio[i]);
-		}
 		int highestIdx = -1;
 		int highest = 0;
 		for(int i = 0; i<6; i++){

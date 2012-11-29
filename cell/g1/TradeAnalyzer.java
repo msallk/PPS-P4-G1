@@ -16,9 +16,7 @@ public class TradeAnalyzer {
 		}
 		double[] ratio = new double[6];
 		for(int i = 0; i<nodes.length; i++){
-			System.out.println();
 			for(int j=0; j<nodes.length; j++){
-				System.out.print(nodes[i][j].getColor());
 				switch(nodes[i][j].getColor()){
 				case 0: db[0]++;
 				   break;
@@ -39,7 +37,6 @@ public class TradeAnalyzer {
 		for(int i=0; i<6; i++){
 			total+=db[i];
 		}
-		System.out.println("toal " + total);
 		for(int i=0; i<6; i++){
 			ratio[i]= db[i]*6.0/total;
 		}

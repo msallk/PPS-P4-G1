@@ -9,10 +9,10 @@ public class Cell {
 	// configuration info that varies less
 	private static boolean gui = true;
 	private static int turns = 100;
-	private static int traders = 6;
+	private static int traders = 10;
 	private static int marbles = 15;
 	private static boolean recompile = false;
-	private static String mapPath = "g1.txt";
+	private static String mapPath = "g3-traps.txt";
 	private static String playerPath = "players.list";
 
 	// return game turns
