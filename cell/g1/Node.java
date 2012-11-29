@@ -12,11 +12,11 @@ public class Node implements Comparable{
 		this.color=color;
 	}
 	
-	public void setPi(Node n){
+	public void setNode(Node n){
 		this.pi=n;
 	}
 	
-	public Node getPi(){
+	public Node getNode(){
 		return pi;
 	}
 	

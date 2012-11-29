@@ -30,15 +30,16 @@ public class Player implements cell.sim.Player, Logger {
 		Direction dir=null;
 		if(iniMarble==0){
 			iniMarble = sack[0];
-			int l = board.length;
-			int n = (3*l*l+1)/4;
-			int p = players.length;
-			int t = traders.length;
-			//thresHold= (int)(l/3*Math.sqrt(p/t));
-			thresHold = (int)(Math.sqrt(n*p/t)*1.414/2) + 1;
-			if(thresHold >= iniMarble)
-				thresHold = iniMarble - 2;
 		}
+		
+		int l = board.length;
+		int n1 = (3*l*l+1)/4;
+		int p = players.length;
+		int t = traders.length;
+		//thresHold= (int)(l/3*Math.sqrt(p/t));
+		thresHold = (int)(Math.sqrt(n1*p/t)*1.414/2) + 1;
+		if(thresHold >= iniMarble - 5)
+			thresHold = iniMarble - 4;
 		 
 		savedSack=sack;
 		if(graph==null)
@@ -100,7 +101,7 @@ public class Player implements cell.sim.Player, Logger {
 				 dir=Player.Direction.SE;
 			} else
 			{
-				System.err.println("You CAN'T move that way!!! Either Jiang Wu or Tianchen Yu screwed up!");
+				System.err.println("You CAN'T move that way!!!");
 			}
 		}
 		if(chosen!=null) 
