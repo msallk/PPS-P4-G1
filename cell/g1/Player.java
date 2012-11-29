@@ -59,61 +59,62 @@ public class Player implements cell.sim.Player, Logger {
 		int max=0;
 		for (Node n: nextSteps)
 		{
-			int color=color(n.getLocation(),board);
-			if(color==-1){
-				log("Potential Dest Node: "+Arrays.toString(n.getLocation()));
-			}
+			int color=n.getColor();
 			if(max<sack[color])
 			{
 				max=sack[color];
 				chosen=n;
 			}
 		}
-		
-		
-		if(chosen==null)
+		log("chosen:"+Arrays.toString(chosen.getLocation()));
+		int di=chosen.getLocation()[0]-location[0];
+		int dj=chosen.getLocation()[1]-location[1];
+		log(di+".."+dj);
+		if(di==0 && dj==-1)
 		{
-			System.err.println("Oops! Ran out of marbles, now YOU ARE DEAD!!!!");
-		}
-		else
+			dir=Player.Direction.W;
+		} else if(di==0 && dj==1)
 		{
-			log("chosen:"+Arrays.toString(chosen.getLocation()));
-			int di=chosen.getLocation()[0]-location[0];
-			int dj=chosen.getLocation()[1]-location[1];
-			log(di+".."+dj);
-			if(di==0 && dj==-1)
-			{
-				 dir=Player.Direction.W;
-			} else if(di==0 && dj==1)
-			{
-				 dir=Player.Direction.E;
-			} else if(di==-1 && dj==-1)
-			{
-				 dir=Player.Direction.NW;
-			} else if(di==-1 && dj==0)
-			{
-				 dir=Player.Direction.N;
-			} else if(di==1 && dj==0)
-			{
-				 dir=Player.Direction.S;
-			} else if(di==1 && dj==1)
-			{
-				 dir=Player.Direction.SE;
-			} else
-			{
-				System.err.println("You CAN'T move that way!!!");
-			}
+			dir=Player.Direction.E;
+		} else if(di==-1 && dj==-1)
+		{
+			dir=Player.Direction.NW;
+		} else if(di==-1 && dj==0)
+		{
+			dir=Player.Direction.N;
+		} else if(di==1 && dj==0)
+		{
+			dir=Player.Direction.S;
+		} else if(di==1 && dj==1)
+		{
+			dir=Player.Direction.SE;
+		} else
+		{
+			System.out.println("You CAN'T move that way!!!");
 		}
+		
 		if(chosen!=null) 
 			savedSack[chosen.color]--;
-		return dir;
-		
+		return dir;		
 	}
 
 	public void trade(double[] rate, int[] request, int[] give)
 	{
 		log("data" + iniMarble);
 		log("threshold" + thresHold);
+		TradeAnalyzer ta = new TradeAnalyzer(graph);
+		double[] thresholdRatio = ta.getRatio(null, null);
+		int[] finalThreshold = new int[6];
+		for(int i=0; i<6; i++){
+			finalThreshold[i] = (int)(thresHold*thresholdRatio[i]);
+		}
+		for(int i=0; i<6; i++){
+			if(finalThreshold[i]==0 && thresholdRatio[i]!=0)
+				finalThreshold[i] = 1;
+		}
+		for(int i=0; i<6; i++){
+		System.out.println("**" + thresholdRatio[i]);
+		}
 		int highestIdx = -1;
 		int highest = 0;
 		for(int i = 0; i<6; i++){
@@ -149,9 +150,9 @@ public class Player implements cell.sim.Player, Logger {
 		for (int r = 0 ; r != 6 ; ++r)
 		{	
 			request[r] = give[r] = 0;
-			if(savedSack[r] < thresHold)
+			if(savedSack[r] < finalThreshold[r])
 			{
-				int countR=thresHold-savedSack[r];
+				int countR=finalThreshold[r]-savedSack[r];
 				request[r]=request[r]+countR;
 				rv+=rate[r]*countR;
 			}
@@ -159,7 +160,7 @@ public class Player implements cell.sim.Player, Logger {
 			{
 				if(rate[r]>lowestRate)
 				{
-					int countG=savedSack[r]-thresHold;
+					int countG=savedSack[r]-finalThreshold[r];
 					give[r]=give[r]+countG;
 					gv+=rate[r]*countG;
 				}
@@ -205,31 +206,11 @@ public class Player implements cell.sim.Player, Logger {
 			}*/
 			//System.out.print("infinite loops!!!!!!!!");
 		}
-		if(rate[highestIdx]/rate[lowestColor] < 1.2 
-				&& 
-				savedSack[highestIdx]< (int)(iniMarble*24/1.25)){
-			for(int i = 0; i<6; i++){
-				request[i] =0;
-				give[i] = 0;
-				}
-			rv = 0;
-			gv = 0;
-		}
 		while (true) {
 			if (rv + rate[lowestColor] >= gv) break;
 			request[lowestColor]++;
 			rv += rate[lowestColor];
 		}
-	}
-
-	private static int color(int[] location, int[][] board)
-	{
-		int i = location[0];
-		int j = location[1];
-		int dim2_1 = board.length;
-		if (i < 0 || i >= dim2_1 || j < 0 || j >= dim2_1)
-			return -1;
-		return board[i][j];
 	}
 
 	private boolean canWin(double[] rt,  int[] sack){

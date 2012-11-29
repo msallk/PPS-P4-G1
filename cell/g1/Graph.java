@@ -12,6 +12,10 @@ public class Graph implements Logger{
 	public void log(String m){
 		System.err.println(m);
 	}
+	
+	public Node[][] getMapnodes(){
+		return mapNodes;
+	}
 	public Graph(int[][] map){
 		this.map=map;
 		mapNodes=new Node[map[0].length][map.length];
