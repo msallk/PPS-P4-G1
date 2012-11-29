@@ -9,7 +9,7 @@ public class Cell {
 	// configuration info that varies less
 	private static boolean gui = true;
 	private static int turns = 100;
-	private static int traders = 10;
+	private static int traders = 12;
 	private static int marbles = 15;
 	private static boolean recompile = false;
 	private static String mapPath = "g3-traps.txt";
@@ -177,6 +177,9 @@ public class Cell {
 		char req = 'X';
 		if (gui) {
 			server = new HTTPServer();
+			int port = server.port();
+			System.err.println("Port: " + port);
+			System.out.println("Port: " + port);
 			while ((req = server.nextRequest(0)) == 'I');
 			if (req != 'B')
 				throw new Exception("Invalid first request");
@@ -368,6 +371,7 @@ public class Cell {
 		System.err.println("---------------");
 		for (int p = 0 ; p != players.length ; ++p) {
 			int[] location = player_location[p];
+			if (location == null) continue;
 			int i = location[0];
 			int j = location[1];
 			System.err.print("Player " + p + ": " + i + "," + j + " [" + sacks[p][0]);
@@ -463,6 +467,7 @@ public class Cell {
 
 	private int[] copyI(int[] a)
 	{
+		if (a == null) return null;
 		int[] b = new int [a.length];
 		for (int i = 0 ; i != a.length ; ++i)
 			b[i] = a[i];
@@ -516,17 +521,33 @@ public class Cell {
 			System.err.println(" (" + possible_moves + ")");
 			if (possible_moves == 0) {
 				in[p] = false;
-				round[p] = -turn;
+				round[p] = -turn - 1;
+				player_location[p] = null;
 				continue;
 			}
 			// move player
-			Player.Direction dir = players[p].move(copyII(board), copyI(player_location[p]),
-			      copyI(sacks[p]), copyII(player_location_copy), copyII(trader_location_copy));
+			Player.Direction dir = null;
+			try {
+				dir = players[p].move(copyII(board), copyI(player_location[p]),
+				                      copyI(sacks[p]), copyII(player_location_copy),
+				                      copyII(trader_location_copy));
+			} catch (Exception e) {
+				System.err.println("Player " + (p + 1) + " threw an exception during move: " + e.getMessage());
+			}
+			if (dir == null) {
+				System.err.println("Invalid move for player " + (p + 1));
+				player_location[p] = null;
+				round[p] = -1;
+				in[p] = false;
+				continue;
+			}
 			System.err.println("Player " + p + " moves " + dir);
 			int[] new_location = move(location, dir);
 			int color = color(new_location, board);
 			if (color < 0 || sack[color] == 0) {
 				System.err.println("Player " + p + ": invalid move");
+				player_location[p] = null;
+				round[p] = -1;
 				in[p] = false;
 				continue;
 			}
@@ -555,7 +576,15 @@ public class Cell {
 				int[] give = new int[6];
 				int p = buyer;
 				int[] sack = sacks[p];
-				players[p].trade(copyD(rates), request, give);
+				try {
+					players[p].trade(copyD(rates), request, give);
+				} catch (Exception e) {
+					System.err.println("Player " + (p + 1) + " threw an exception during trade: " + e.getMessage());
+					player_location[p] = null;
+					round[p] = -1;
+					in[p] = false;
+					continue;
+				}
 				System.err.println("Player " + p + " trades with trader " + t);
 				System.err.print("Rates: [" + rates[0]);
 				for (int r = 1 ; r != 6 ; ++r)
@@ -601,11 +630,14 @@ public class Cell {
 						if (sack[r] < marbles * 4)
 							finished = false;
 					if (finished) {
+						player_location[p] = null;
 						in[p] = false;
 						round[p] = turn;
 					}
 				} else {
 					System.err.println("Player " + p + ": invalid trade");
+					player_location[p] = null;
+					round[p] = -1;
 					in[p] = false;
 				}
 				System.err.println("Transaction is done!");
@@ -680,8 +712,10 @@ public class Cell {
 					System.err.print(r + ": " + players[p].name() + ": ");
 					if (round[p] > 0)
 						System.err.println("finished at round " + round[p]);
-					else if (round[p] < 0)
-						System.err.println("lost marbles at round " + -round[p]);
+					else if (round[p] == -1)
+						System.err.println("disqualified");
+					else if (round[p] < -1)
+						System.err.println("lost marbles at round " + (- round[p] - 1));
 					else
 						System.err.println("remained in game with " + count[p] + " marbles");
 				}

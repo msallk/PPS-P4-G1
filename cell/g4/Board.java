@@ -135,4 +135,8 @@ public class Board {
 		
 		return dist;
 	}
+	
+	public int[][] getBoard(){
+		return board;
+	}
 }

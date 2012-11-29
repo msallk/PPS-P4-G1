@@ -16,8 +16,9 @@ class HTTPServer {
 		if (!sock.isBound())
 			throw new Exception("Invalid HTTP server port");
 		port = sock.getLocalPort();
-		System.err.println("Port: " + port);
 	}
+
+	public int port() { return port; }
 
 	public void close() throws Exception { sock.close(); }
 
@@ -78,11 +79,13 @@ class HTTPServer {
 
 	private void replyFile(String path) throws Exception
 	{
+		path = path.replace('/', File.separatorChar);
 		File file = new File(path);
 		if (!file.exists()) {
 			System.err.println("File \"" + path + "\" not found");
 			return;
 		}
+		System.err.println("File \"" + path + "\" found and sent");
 		FileInputStream in = new FileInputStream(file);
 		String head = "HTTP/1.0 200 OK\r\n";
 		head += "Content-Length: " + file.length() + "\r\n";

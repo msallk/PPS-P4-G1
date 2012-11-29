@@ -3,14 +3,25 @@ package cell.g4;
 import java.util.Arrays;
 
 public class Sack {
-	private int[] sacks;
-	private int[] reserves = {5,5,5,5,5,5};
+	protected int[] sacks;
+	protected int[] reserves;
+	protected Board board;
 	
+	protected final static int MinReserve = 3;
+	protected final static double MinRatio = 0.2;
+	
+	public static int InitialMarble = 0;
 	public static int WinningStock = 0;
 	
-	public Sack(int[] sack) {
+	public Sack(int[] sack,Board board) {
+		InitialMarble = sack[0];
 		WinningStock = sack[0] * 4;
 		this.sacks = Arrays.copyOf(sack, sack.length);
+		this.board = board;
+		
+		reserves = new int[6];
+		for (int i = 0; i < 6; i++)
+			reserves[i] = MinReserve;
 	}
 	
 	public void update(int[] sack) {
@@ -36,7 +47,7 @@ public class Sack {
 	public int getReserve(int color) {
 		return reserves[color];
 	}
-
+	
 	public void decrease(int color) {
 		sacks[color]--;
 	}

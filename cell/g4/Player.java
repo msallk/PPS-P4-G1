@@ -1,29 +1,27 @@
 package cell.g4;
 
-import java.util.Arrays;
-import java.util.Random;
-
 import cell.g4.movement.MoveAlgo;
 import cell.g4.movement.ShortestPathMove;
-import cell.g4.trade.MaxRateDiffTrade;
 import cell.g4.trade.MergeTrade;
 import cell.g4.trade.TradeAlgo;
-import cell.sim.Player.Direction;
 
 public class Player implements cell.sim.Player {
 	private static int versions = 0;
-	private int version = ++versions;	
+	public static int version = ++versions;
 	
 	// the map
 	private Board board = null;
 	// our sack
 	private Sack sacks;
+	
 	// our location
 	private int[] loc = new int[2];
 	// movement algorithm
 	private MoveAlgo movement;
 	// trading algorithm
-	private TradeAlgo trading;	
+	private TradeAlgo trading;
+	
+	private Game game = null;
 
 	@Override
 	public Direction move(int[][] map, int[] location, int[] sack,
@@ -31,16 +29,18 @@ public class Player implements cell.sim.Player {
 		// create a map object the first time we move 
 		if (board == null) {
 			board = new Board(map);
-			sacks = new Sack(sack);
+//			sacks = new Sack(sack,board);
+			sacks = new DynamicSack(sack,board);
 			
 			trading = new MergeTrade(board, sacks);
 			movement = new ShortestPathMove(board, sacks);
+			
+			game = Game.initGame(location, players);
 		}
 		// routines
-		loc[0] = location[0];
-		loc[1] = location[1];		
+		loc[0] = location[0]; loc[1] = location[1];		
 		sacks.update(sack);
-		
+		game.updateTrades(players, traders);
 		
 		Direction dir = movement.move(location, players, traders);
 		int[] new_location = board.nextLoc(location, dir);		
@@ -57,6 +57,6 @@ public class Player implements cell.sim.Player {
 	
 	@Override
 	public String name() {
-		return "G4 Player" + (versions > 1 ? " v" + version : "");
+		return "G4" + (versions > 1 ? " v" + version : "");
 	}
 }

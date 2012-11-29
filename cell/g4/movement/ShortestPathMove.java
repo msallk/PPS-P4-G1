@@ -3,23 +3,25 @@ package cell.g4.movement;
 import java.util.List;
 
 import cell.g4.Board;
+import cell.g4.Player;
 import cell.g4.Sack;
 import cell.sim.Player.Direction;
 
 public class ShortestPathMove extends MoveAlgo {
+	private TraderFinder traderFinder;	
 	
 	public ShortestPathMove(Board board, Sack sack) {
 		super(board, sack);
+		traderFinder = new ClosestTraderFinder(board);
 	}
 	
 	@Override
 	public Direction move(int[] location, int[][] players, int[][] traders) {
 		
 		assert(board != null);
+		int nextTrader = traderFinder.findBestTrader(location, players, traders);
 		
-		int nearestTrader = findNearestTrader(location, traders);
-		
-		List<Direction> dirs = board.nextMove(location, traders[nearestTrader]);
+		List<Direction> dirs = board.nextMove(location, traders[nextTrader]);
 		
 		Direction dir = pickDir(location, dirs);
 		
@@ -38,18 +40,5 @@ public class ShortestPathMove extends MoveAlgo {
 		}
 		return dir;
 	}
-	
 
-	private int findNearestTrader(int[] location, int[][] traders) {
-		int mindist = Integer.MAX_VALUE;
-		int nearest = -1;
-		for (int i = 0; i < traders.length; i++) {
-			int dist = board.mindist(location, traders[i]);
-			if (dist < mindist) {
-				mindist = dist;
-				nearest = i;
-			}
-		}
-		return nearest;
-	}
 }

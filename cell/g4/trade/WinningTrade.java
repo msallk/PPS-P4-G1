@@ -40,9 +40,6 @@ public class WinningTrade extends TradeAlgo {
 				requestValue += -remain * rate[i];
 			}
 		}
-		System.out.println("DEBUG");
-		System.out.println(giveValue);
-		System.out.println(requestValue);
 		
 		if (giveValue >= requestValue)
 			return true;

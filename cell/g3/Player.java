@@ -8,20 +8,22 @@ import java.util.Set;
 
 public class Player implements cell.sim.Player {
 
-	private Random gen = new Random();
-	private int[] savedSack;
-	private static int versions = 0;
-	private int version = ++versions;
+	public Random gen = new Random();
+	public int[] savedSack;
+	public static int versions = 0;
+	public int version = ++versions;
 
-	private int quadCount = 0;
-	private int[] tradeRequest;
-	private int[] tradeGive;
+	public int quadCount = 0;
 	
+	public int[][] board;
+	public int[] currentLocation;
+	public int[] nextLocation;
+
 	//TODO: Map-analysis, so as to generate the nextThreshold --> threshold for getting to the immediate next leprechaun
 											//	globalThreshod --> depends on the state of the sack and location on map
 											// 	to decide what to use.. next or global...
-	private int[] maxNextThreshold = new int[] {5,5,5,5,5,5};
-	private int[] minNextThreshold = new int[] {3,3,3,3,3,3};
+	public int[] maxNextThreshold = new int[] {9,9,9,9,9,9};
+	public int[] minNextThreshold = new int[] {6,6,6,6,6,6};
 	
 
 	public String name() { return "G3" + (version != 1 ? " v" + version : ""); }
@@ -29,24 +31,30 @@ public class Player implements cell.sim.Player {
 	public Direction move(int[][] board, int[] location, int[] sack,
 	                      int[][] players, int[][] traders)
 	{
-		Mover mover = new Mover(copyII(board));
+		this.board = copyII(board);
+		this.currentLocation = copyI(location);
+		
+		Mover mover = new Mover(copyI(this.currentLocation), copyII(this.board), copyII(traders), copyI(sack));
 		
 		savedSack = copyI(sack);
 		if (quadCount == 0)
 			quadCount = 4 * sack[0];
 
 		for (;;) {
-			Direction dir = randomDirection();
+			Direction dir = mover.getNextStep();
 			int[] new_location = move(location, dir);
 			int color = color(new_location, board);
+//			System.out.println("new loc: " + new_location + ". color: " + color + ". No of that color: " + sack[color]);
 			if (color >= 0 && sack[color] != 0) {
 				savedSack[color]--;
+				nextLocation = move(currentLocation, dir); //store next location to compute min thresholds
 				return dir;
 			}
 		}
+		
 	}
 
-	private Direction randomDirection()
+	public static Direction randomDirection(Random gen)
 	{
 		switch(gen.nextInt(6)) {
 			case 0: return Direction.E;
@@ -61,7 +69,17 @@ public class Player implements cell.sim.Player {
 
 	public void trade(double[] rate, int[] request, int[] give)
 	{
-		Trader trader = new Trader();
+		Trader trader = new Trader(this);
+		
+		MapAnalyzer ma = new MapAnalyzer(board, nextLocation, this);
+		minNextThreshold = ma.getMinRequired();
+		///
+//		System.out.println("we ( " + name() + " ) are on color " + color(nextLocation, board));
+//		System.out.println("current: " + currentLocation + ". next: " + nextLocation);
+		for(int i : minNextThreshold)
+//			System.out.println("min threshhold for" + name() + " " + i);
+		///
+		
 		
 		//Winning trade... the final step to victory !
 		if (trader.winningTrade(rate, request, give))
@@ -70,16 +88,12 @@ public class Player implements cell.sim.Player {
 		//Threshold decision -- next or global
 		//Use sortedIndices(rate) to get an array of indices of rate, sorted by rate in ascending order. 
 		//TODO: Jama implementation for more than 1 color trading
-		//TODO: Need a combination of saving and greedy trades. Save some marbles, and still be greedy about others.
-		
-		if (trader.savingTrade(rate, request, give))
-			return;
 
-		//Greedy trade
+		//Greedy trade that also saves some colors.
 		trader.greedyTrade(rate, request, give);
 	}
 
-	private static int[] move(int[] location, Player.Direction dir)
+	public static int[] move(int[] location, Player.Direction dir)
 	{
 		int di, dj;
 		int i = location[0];
@@ -106,343 +120,8 @@ public class Player implements cell.sim.Player {
 		int[] new_location = {i + di, j + dj};
 		return new_location;
 	}
-
-	class Trader
-	{
-		
-		// If there is a winningTrade, return true and set player-level request and give arrays accordingly.
-		// Else return false.
-		public Boolean winningTrade(double[] rate, int[] request, int[] give)
-		{
-			double giveVal = 0;
-			double requestVal = 0;
-
-			for (int i = 0; i < rate.length; i++) {
-				if (savedSack[i] > quadCount) {
-					give[i] = savedSack[i] - quadCount;
-					request[i] = 0;
-				} else {
-					give[i] = 0;
-					request[i] = quadCount - savedSack[i];
-				}
-
-				giveVal += give[i] * rate[i];
-				requestVal += request[i] * rate[i];
-			}
-
-			if (giveVal >= requestVal && giveVal > 0) {
-				System.out.println("DEBUG Winning Trade " + giveVal + " " + requestVal);
-				return true;
-			}
-
-			return false;
-		}
-
-		// If some marbles are below threshold, we need to save the player even if it is a lossy trade.
-		//    return true and set player-level request and give arrays accordingly.
-		// Else return false.
-		public Boolean savingTrade(double[] rate, int[] request, int[] give)
-		{
-			Boolean save = false;
-			double giveVal = 0;
-			double requestVal = 0;
-
-			for (int i = 0; i < rate.length; i++) {
-				if (savedSack[i] <= minNextThreshold[i]) {
-					save = true;
-					break;
-				}
-			}
-
-			if (save) {
-				for (int i = 0; i < rate.length; i++) {
-					if (savedSack[i] <= minNextThreshold[i]) {
-						request[i] = maxNextThreshold[i] - savedSack[i];
-						requestVal += request[i] * rate[i];
-						give[i] = 0;
-					} else {
-						request[i] = 0;
-						give[i] = 0;
-					}
-				}
-
-				for (int i = 0; i < rate.length; i++) {
-					if (savedSack[i] > maxNextThreshold[i]) {
-						give[i] = (int)((requestVal - giveVal) / rate[i]) + 1;
-
-						if (give[i] > savedSack[i] - maxNextThreshold[i])
-							give[i] = savedSack[i] - maxNextThreshold[i];
-
-						giveVal += give[i] * rate[i];
-					}
-				}
-
-				if (giveVal >= requestVal && giveVal > 0) {
-					System.out.println("DEBUG Saving Trade " + giveVal + " " + requestVal);
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		public void greedyTrade(double[] rate, int[] request, int[] give)
-		{
-			int minIndex = minIndex(rate);
-			double giveVal = 0;
-			double requestVal = 0;
-
-			for(int i = 0; i < rate.length; i ++) {
-				if(i == minIndex || savedSack[i] <= maxNextThreshold[i])
-					give[i] = 0;
-				else
-					give[i] = savedSack[i] - maxNextThreshold[i];
-
-				request[i] = 0;
-				giveVal += give[i] * rate[i];
-			}
-
-			request[minIndex] = (int)(giveVal / rate[minIndex]);
-			requestVal = request[minIndex] * rate[minIndex];
-			System.out.println("DEBUG Greedy Trade " + giveVal + " " + requestVal);
-		}
-	}
 	
-	class Mover
-	{
-		int[][] board;
-		Mover(int[][] board)
-		{
-			this.board = board;  
-		}
-		private int[] marblesForRoute(int[] currentlocation, Direction[] directions)
-		{
-			int[] marbles = new int[] {0,0,0,0,0,0};
-			int currentColor = color(currentlocation, board);
-			
-			for(int i = 0; i != directions.length; i ++)
-			{
-				int[] loc = move(currentlocation, directions[i]);
-				int colorIndex = color(loc, board);
-				marbles[colorIndex] ++;
-				currentlocation = loc;
-			}
-			
-			return marbles;
-		}
-	}
-	
-	class MapAnalyzer
-	{
-		int[][] board;
-		int radius = 2;
-		int[] minRequired;
-		Set<Integer[]> visitedLocations;
-		int[] currentLocation;
-		
-		MapAnalyzer(int[][] board, int[] currentLocation)
-		{
-			this.board = board;
-			this.currentLocation = currentLocation;
-			minRequired = new int[6];
-			visitedLocations = new HashSet<Integer[]>();
-			visitedLocations.add(wrapIntToIntegerArray(currentLocation));
-			computeMinThreshold(currentLocation);
-		}
-		
-		Map<Integer[], Integer> neighbors(int[] location)
-		{
-			Map<Integer[], Integer> returnList = new HashMap<Integer[], Integer>();
-			
-			for(Player.Direction d : Direction.values())
-			{
-				int[] neighbor = move(location, d);
-				int color = (color(neighbor, board)); 
-				if(color != -1)
-				{
-					returnList.put(wrapIntToIntegerArray(neighbor), color);
-				}
-			}
-			return returnList;
-		}
-		
-		Integer[] wrapIntToIntegerArray(int[] a)
-		{
-			Integer[] newArray = new Integer[a.length];
-			int i = 0;
-			for(int value : a)
-			{
-				newArray[i++] = Integer.valueOf(value);
-			}
-			return newArray;
-		}
-		
-		int[] wrapIntegerToIntArray(Integer[] a)
-		{
-			int[] newArray = new int[a.length];
-			int i = 0;
-			for(int value : a)
-			{
-				newArray[i++] = Integer.valueOf(value);
-			}
-			return newArray;
-		}
-		
-		public int[] getMinRequired() {
-			return minRequired;
-		}
-		
-		Map<Integer[], Integer> initialize(int[] location)
-		{
-			Map<Integer[], Integer> map = neighbors(location);
-			
-			for(Map.Entry entry : map.entrySet())
-			{
-				minRequired[(Integer)entry.getValue()] = 1;
-				visitedLocations.add((Integer[])entry.getKey());
-			}
-			return map;
-		}
-		
-		void computeMinThreshold(int[] currentLocation)
-		{
-			Map<Integer[], Integer> map = initialize(currentLocation);
-			map = expandRadius(map);
-		}
-		
-		Map<Integer[], Integer> expandRadius(Map<Integer[], Integer> map)
-		{
-			Map<Integer[], Integer> tempNeighborsMap = new HashMap<Integer[], Integer>();
-			Map<Integer[], Integer> outerNeighborsMap = new HashMap<Integer[], Integer>();
-			for(Map.Entry<Integer[], Integer> entry : map.entrySet())
-			{
-				tempNeighborsMap = neighbors(wrapIntegerToIntArray((Integer[])entry.getKey()));
-				
-				for(Map.Entry<Integer[], Integer> m : tempNeighborsMap.entrySet())
-				{
-					if(!visitedLocations.contains(m) && !outerNeighborsMap.containsKey(m.getKey()))
-					{
-						outerNeighborsMap.put(m.getKey(), m.getValue());
-					}
-				}
-			}	
-			//check for straight paths
-			for(Map.Entry<Integer[], Integer> entry : outerNeighborsMap.entrySet())
-			{		
-					if(straightPath((Integer[])entry.getKey()))
-					{
-						visitedLocations.add((Integer[])entry.getKey());
-						int count = countSameColorStraightPath(entry);
-						if(count > minRequired[(Integer)entry.getValue()])
-						{
-							minRequired[(Integer)entry.getValue()] = count;
-						}
-					}
-					else
-						continue;
-			}
-			
-			//Done with straight paths... add code for outer neighbors that have more than 1 shortest paths to dem thru currentLocation
-			//for(Map.Entry<Integer[], Integer> entry : outerNeighborsMap.entrySet())
-			//{
-			//	if(!visitedLocations.contains(m))
-//			{
-//				
-//			}
-			//}
-			
-			
-			return map;
-		}
-		
-		int countSameColorStraightPath(Map.Entry<Integer[], Integer> entry)
-		{
-			int count = 0;
-			int dx = entry.getKey()[0] - currentLocation[0];
-			int dy = entry.getKey()[1] - currentLocation[1];
-			int color = entry.getValue();
-			
-			if(dx == dy)
-			{
-				if(dx < 0) //NW
-				{
-					for(int i = 1; i <= dx; i --)
-					{
-						int[] x = new int[] {currentLocation[0] - i, currentLocation[1] - i}; 
-						if(color(x, board) == color)
-							count ++;
-					}
-				}
-				else if(dx > 0) //SE
-				{
-					for(int i = 1; i <= dx; i ++)
-					{
-						int[] x = new int[] {currentLocation[0] + i, currentLocation[1] + i}; 
-						if(color(x, board) == color)
-							count ++;
-					}
-				}
-			}
-			else if (dx == 0)
-			{
-				if(dy < 0) //N
-				{
-					for(int i = 1; i <= Math.abs(dy); i ++)
-					{
-						int[] x = new int[] {currentLocation[0], currentLocation[1] - i}; 
-						if(color(x, board) == color)
-							count ++;
-					}
-				}
-				else if(dy > 0) //S
-				{
-					for(int i = 1; i <= dy; i ++)
-					{
-						int[] x = new int[] {currentLocation[0], currentLocation[1] + i}; 
-						if(color(x, board) == color)
-							count ++;
-					}
-				}
-			}
-			else if(dy == 0)
-			{
-				if(dx < 0) //W
-				{
-					for(int i = 1; i <= Math.abs(dx); i ++)
-					{
-						int[] x = new int[] {currentLocation[0] - i, currentLocation[1]}; 
-						if(color(x, board) == color)
-							count ++;
-					}
-				}
-				else if(dx > 0) //E
-				{
-					for(int i = 1; i <= dx; i ++)
-					{
-						int[] x = new int[] {currentLocation[0] + i, currentLocation[1]}; 
-						if(color(x, board) == color)
-							count ++;
-					}
-				}
-			}
-			else
-				System.err.println("DEBUG Problems in countSameColorStraighPath()");
-			return count;
-		}
-		
-		boolean straightPath(Integer[] locs)
-		{
-			int dx = locs[0] - currentLocation[0];
-			int dy = locs[1] - currentLocation[1];
-			if(dx == dy || dx == 0 || dy == 0)
-				return true;
-			return false;
-		}
-		
-		
-	}
-	
-	private int maxIndex(double[] a)
+	public int maxIndex(double[] a)
 	{
 		int maxIndex = 0;
 		for(int i = 0; i < a.length; i ++)
@@ -453,7 +132,7 @@ public class Player implements cell.sim.Player {
 		return maxIndex;
 	}
 	
-	private int minIndex(double[] a)
+	public int minIndex(double[] a)
 	{
 		int minIndex = 0;
 		for(int i = 0; i < a.length; i ++)
@@ -464,7 +143,7 @@ public class Player implements cell.sim.Player {
 		return minIndex;
 	}
 	
-	private int maxIndex(int[] a)
+	public int maxIndex(int[] a)
 	{
 		int maxIndex = 0;
 		for(int i = 0; i < a.length; i ++)
@@ -475,7 +154,7 @@ public class Player implements cell.sim.Player {
 		return maxIndex;
 	}
 	
-	private int minIndex(int[] a)
+	public int minIndex(int[] a)
 	{
 		int minIndex = 0;
 		for(int i = 0; i < a.length; i ++)
@@ -486,7 +165,7 @@ public class Player implements cell.sim.Player {
 		return minIndex;
 	}
 	
-	private int total(int[] a)
+	public int total(int[] a)
 	{
 		int total = 0;
 		for(int i = 0; i < a.length; i ++)
@@ -496,7 +175,7 @@ public class Player implements cell.sim.Player {
 		return total;
 	}
 	
-	private static int color(int[] location, int[][] board)
+	public static int color(int[] location, int[][] board)
 	{
 		int i = location[0];
 		int j = location[1];
@@ -506,7 +185,7 @@ public class Player implements cell.sim.Player {
 		return board[i][j];
 	}
 
-	private int[] copyI(int[] a)
+	public int[] copyI(int[] a)
 	{
 		int[] b = new int [a.length];
 		for (int i = 0 ; i != a.length ; ++i)
@@ -514,7 +193,7 @@ public class Player implements cell.sim.Player {
 		return b;
 	}
 	
-	private int[][] copyII(int[][] a)
+	public int[][] copyII(int[][] a)
 	{
 		int[][] b = new int [a.length][a[0].length];
 		for (int i = 0 ; i != a.length ; ++i)
@@ -523,7 +202,7 @@ public class Player implements cell.sim.Player {
 		return b;
 	}
 
-	private int[] sortedIndices(double[] a)
+	public int[] sortedIndices(double[] a)
 	{
 		int[] indices = new int [a.length];
 		double[] b = new double [a.length];
@@ -538,5 +217,45 @@ public class Player implements cell.sim.Player {
 		}
 
 		return indices;
+	}
+	
+	public int[][] getBoard() {
+		return board;
+	}
+	
+	public Random getGen() {
+		return gen;
+	}
+
+	public int[] getSavedSack() {
+		return savedSack;
+	}
+
+	public static int getVersions() {
+		return versions;
+	}
+
+	public int getVersion() {
+		return version;
+	}
+
+	public int getQuadCount() {
+		return quadCount;
+	}
+
+	public int[] getCurrentLocation() {
+		return currentLocation;
+	}
+
+	public int[] getNextLocation() {
+		return nextLocation;
+	}
+
+	public int[] getMaxNextThreshold() {
+		return maxNextThreshold;
+	}
+
+	public int[] getMinNextThreshold() {
+		return minNextThreshold;
 	}
 }

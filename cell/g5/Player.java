@@ -40,13 +40,17 @@ public class Player implements cell.sim.Player {
 		/* TODO: perhaps identify which index is us. */
 		List<int[]> exclusiveTraders = Board.getExclusiveTraders(location, players, traders);
 		if (exclusiveTraders.size() == 0) {
-			logger.log("No exclusive leprechaun. Moving randomly.");
+			logger.log("No exclusive leprechaun. Moving to the center.");
 			/* Fallback. */
 			for (;;) {
-				dir = randomDirection();
+				int[] center = Board.getCenter(board);
+				if(Arrays.equals(center, location))
+					dir = randomDirection();
+				else dir = Board.makeNaiveProgressToward(location, center);
 				int[] new_location = move(location, dir);
 				int color = color(new_location, board);
 				if (color >= 0 && sack[color] != 0) {
+					logger.log("Moved toward the center.");
 					savedSack[color]--;
 					return dir;
 				}
@@ -70,11 +74,14 @@ public class Player implements cell.sim.Player {
 			return dir;
 		}
 		
-		logger.log("We could not take the step toward the exclusive. Moving randomly.");
+		logger.log("We could not take the step toward the exclusive. Moving to the center.");
 
 		/* Fallback. */
 		for (;;) {
-			dir = randomDirection();
+			int[] center = Board.getCenter(board);
+			if(Arrays.equals(center, location))
+				dir = randomDirection();
+			else dir = Board.makeNaiveProgressToward(location, center);
 			new_location = move(location, dir);
 			color = color(new_location, board);
 			if (color >= 0 && sack[color] != 0) {

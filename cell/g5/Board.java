@@ -130,6 +130,10 @@ public class Board {
 		return closest;
 	}
 	
+	public static int[] getCenter(int[][] board) {
+		return new int[] { board.length / 2 , board.length / 2};
+	}
+	
 	/**
 	 * Returns traders we're confident we'll reach first.
 	 *  Tested. 
