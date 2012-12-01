@@ -55,8 +55,16 @@ public class Player implements cell.sim.Player, Logger {
 		
 		if(routeAnalyzer==null)
 			routeAnalyzer=new RouteAnalyzer(graph);
-
-		int[] closest=routeAnalyzer.getDestination2(location,sack, players, traders);
+	/*	for (int i=0; i<traders.length; i++ )
+		{
+			nextPerTrader.add(graph.getNextStep(location, traders[i]));
+		}
+		*/
+		
+		//int[] closest=graph.nearestTrader(location,traders);
+		int[] closest=routeAnalyzer.getDestination1(location,sack, players, traders);
+		if(closest==null)
+			closest=routeAnalyzer.getDestination2(location,sack, players, traders);
 		nextSteps=graph.getNextStep(location, closest);
 		Node chosen=null;
 		int max=0;

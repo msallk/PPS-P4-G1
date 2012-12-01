@@ -24,8 +24,6 @@ public class RouteAnalyzer implements Logger{
 				distance=temp;
 			}
 		}
-		if(trader==null)
-			trader=getAlternative(current,sack, players);
 		return trader;
 	}
 
@@ -55,12 +53,12 @@ public class RouteAnalyzer implements Logger{
 			}
 		}
 		if(trader==null)
-			trader=getAlternative(current,sack, players);
+			trader=getAlternative(current,sack, traders);
 		return trader;
 	}
 
-	private int[] getAlternative(int[] current, int[] sack, int[][] players) {
-		return null;
+	private int[] getAlternative(int[] current, int[] sack, int[][] traders) {
+		return getNearest(traders,current);
 	}
 
 	private int[][] checkOthers2(int[][] traders, int[][] players) {
@@ -92,6 +90,8 @@ public class RouteAnalyzer implements Logger{
 
 	private boolean checkOthers1(int[] trader, int[][] players, int distance) {
 		for(int[] p:players){
+			if(p==null)
+				continue;
 			if(g.getDistance(p, trader)<distance)
 				return false;
 		}
