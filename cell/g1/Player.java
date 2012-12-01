@@ -35,7 +35,12 @@ public class Player implements cell.sim.Player, Logger {
 		
 		int l = board.length;
 		int n1 = (3*l*l+1)/4;
-		int p = players.length;
+		int p = 0;
+		for(int i=0; i<players.length; i++){
+			if(players[i]==null)
+				continue;
+			p++;
+		}
 		int t = traders.length;
 		//thresHold= (int)(l/3*Math.sqrt(p/t));
 		thresHold = (int)(Math.sqrt(n1*p/t)*1.414/2) + 1;
@@ -50,14 +55,7 @@ public class Player implements cell.sim.Player, Logger {
 		
 		if(routeAnalyzer==null)
 			routeAnalyzer=new RouteAnalyzer(graph);
-		
-	/*	for (int i=0; i<traders.length; i++ )
-		{
-			nextPerTrader.add(graph.getNextStep(location, traders[i]));
-		}
-		*/
-		
-		//int[] closest=graph.nearestTrader(location,traders);
+
 		int[] closest=routeAnalyzer.getDestination2(location,sack, players, traders);
 		nextSteps=graph.getNextStep(location, closest);
 		Node chosen=null;
@@ -175,38 +173,9 @@ public class Player implements cell.sim.Player, Logger {
 				request[i] =0;
 				give[i] = 0;
 			}
-			if(count>5)
+			if(count>3)
 				break;
 			else ++count;
-			/*
-			else ++count;
-			for(int i=0; i<6; i++)
-			{
-				if(savedSack[i]>thresHold) //only one color has a count that is more than threshold
-				{
-					int n=(int)((rv-gv)/rate[i]+1);
-					int maxGivable=savedSack[i]-thresHold;
-					if(maxGivable>n)
-					{
-						give[i]+=n;
-						gv+=rate[i]*n;
-					}
-					else
-					{
-						for(int j=0; j<6; j++)
-						{
-							if(request[j]>0)
-							{
-								request[j]=request[j]-1;
-								rv=rv-rate[j];
-								System.out.println("rv is now: "+rv);
-								
-							}
-						} 
-					}
-				}
-			}*/
-			//System.out.print("infinite loops!!!!!!!!");
 		}
 		while (true) {
 			if (rv + rate[lowestColor] >= gv) break;
