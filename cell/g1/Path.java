@@ -6,6 +6,10 @@ public class Path implements Comparable<Path>, Cloneable{
 	int length;
 	ArrayList<Node> locs;
 	
+	public Path(){
+		locs=new ArrayList<Node>();
+	}
+	
 	public void add(Node loc){
 		locs.add(loc);
 		length=locs.size();
@@ -33,6 +37,10 @@ public class Path implements Comparable<Path>, Cloneable{
 	public void remove(Node node) {
 		locs.remove(node);
 		length=locs.size();
+	}
+	
+	public String toString(){
+		return locs.toString();
 	}
 	
 }

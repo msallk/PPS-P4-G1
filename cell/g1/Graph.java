@@ -118,9 +118,9 @@ public class Graph implements Logger{
 			return;
 		}
 		for(Node b:getNextStep(curr,dest)){
-			log(getNextStep(curr,dest).toString());
-			if(!b.equals(mapNodes[curr[0]][curr[1]]));
-			buildPaths(b.getLocation(),dest,paths,p);
+			//log(getNextStep(curr,dest).toString());
+			if(!b.equals(mapNodes[curr[0]][curr[1]]))
+				buildPaths(b.getLocation(),dest,paths,p);
 		}
 		p.remove(mapNodes[curr[0]][curr[1]]);
 	}
@@ -200,7 +200,7 @@ public class Graph implements Logger{
 						nodes.add(mapNodes[y1][x1-1]);
 				}
 				if(mapNodes[y1+1][x1].color!=-1)
-					if(mapNodes[y1-1][x1].color!=-1)
+					if(mapNodes[y1+1][x1].color!=-1)
 						nodes.add(mapNodes[y1+1][x1]);
 				//checkValid(nodes);
 				return nodes;
