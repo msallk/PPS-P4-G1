@@ -6,7 +6,7 @@ public class Node implements Comparable{
 	int y;
 	Node pi;
 	
-	public Node(int y, int x, int color){
+	public Node(int x, int y, int color){
 		this.x=x;
 		this.y=y;
 		this.color=color;
@@ -42,6 +42,6 @@ public class Node implements Comparable{
 	}
 	
 	public String toString(){
-		return "[["+y+", "+x+"]]";
+		return "[["+x+", "+y+"]]";
 	}
 }

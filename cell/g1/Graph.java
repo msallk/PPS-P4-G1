@@ -8,9 +8,11 @@ public class Graph implements Logger{
 	private int[][] map;
 	private Node[][] mapNodes;
 	private int[][] traders; 
+	private boolean DEBUG=false;
 
 	public void log(String m){
-		System.err.println(m);
+		if(DEBUG)
+			System.err.println(m);
 	}
 	
 	public Node[][] getMapnodes(){
@@ -115,12 +117,14 @@ public class Graph implements Logger{
 		p.add(mapNodes[curr[0]][curr[1]]);
 		if(curr[0]==dest[0] && curr[1]==dest[1]){
 			paths.add((Path)p.clone());
+			p.remove(mapNodes[curr[0]][curr[1]]);
 			return;
 		}
 		for(Node b:getNextStep(curr,dest)){
 			//log(getNextStep(curr,dest).toString());
 			if(!b.equals(mapNodes[curr[0]][curr[1]]))
-				buildPaths(b.getLocation(),dest,paths,p);
+				if(getDistance(b.getLocation(),dest)<getDistance(curr,dest))
+					buildPaths(b.getLocation(),dest,paths,p);
 		}
 		p.remove(mapNodes[curr[0]][curr[1]]);
 	}

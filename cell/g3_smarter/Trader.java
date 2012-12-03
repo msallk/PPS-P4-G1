@@ -1,4 +1,4 @@
-package cell.g3;
+package cell.g3_smarter;
 
 import java.util.Arrays;
 

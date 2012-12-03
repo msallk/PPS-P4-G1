@@ -1,4 +1,4 @@
-package cell.g3;
+package cell.g3_smarter;
 
 import java.util.Random;
 
@@ -15,7 +15,6 @@ public class Player implements cell.sim.Player {
 	public int[] currentLocation;
 	public int[] nextLocation;
 	public int[][] traders;
-	public int[][] players;
 	
 	//TODO: Map-analysis, so as to generate the nextThreshold --> threshold for getting to the immediate next leprechaun
 											//	globalThreshod --> depends on the state of the sack and location on map
@@ -29,7 +28,6 @@ public class Player implements cell.sim.Player {
 	public Direction move(int[][] board, int[] location, int[] sack,
 	                      int[][] players, int[][] traders)
 	{
-		this.players = copyII(players);
 		this.traders = copyII(traders);
 		this.board = copyII(board);
 		this.currentLocation = copyI(location);

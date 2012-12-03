@@ -42,9 +42,10 @@ public class Player implements cell.sim.Player {
 		if (exclusiveTraders.size() == 0) {
 			logger.log("No exclusive leprechaun. Moving to the center.");
 			/* Fallback. */
+			boolean canMoveToCenter = true; 
 			for (;;) {
 				int[] center = Board.getCenter(board);
-				if(Arrays.equals(center, location))
+				if(Arrays.equals(center, location) || !canMoveToCenter)
 					dir = randomDirection();
 				else dir = Board.makeNaiveProgressToward(location, center);
 				int[] new_location = move(location, dir);
@@ -54,7 +55,8 @@ public class Player implements cell.sim.Player {
 					savedSack[color]--;
 					return dir;
 				}
-			}
+				else canMoveToCenter = false;
+			}			
 		}
 		
 		for(int[] trader : exclusiveTraders) {
@@ -77,9 +79,10 @@ public class Player implements cell.sim.Player {
 		logger.log("We could not take the step toward the exclusive. Moving to the center.");
 
 		/* Fallback. */
+		boolean canMoveToCenter = true; 
 		for (;;) {
 			int[] center = Board.getCenter(board);
-			if(Arrays.equals(center, location))
+			if(Arrays.equals(center, location)  || !canMoveToCenter)
 				dir = randomDirection();
 			else dir = Board.makeNaiveProgressToward(location, center);
 			new_location = move(location, dir);
@@ -89,6 +92,7 @@ public class Player implements cell.sim.Player {
 				storedLocation = new_location;
 				return dir;
 			}
+			else canMoveToCenter = false;
 		}
 	}
 

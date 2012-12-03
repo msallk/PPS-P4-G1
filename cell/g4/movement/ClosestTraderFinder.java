@@ -66,6 +66,8 @@ public class ClosestTraderFinder extends TraderFinder {
 		for (int i = 0; i < traders.length; i++) {
 			indices[i] = i;
 			for (int j = 0; j < teams.length; j++) {
+				if (teams[j] == null)
+					continue;
 				dists[i][j] = board.mindist(traders[i], teams[j]);
 				if (j == Game.getGame().getOurIndex()) {
 					ourdists[i] = dists[i][j];
@@ -75,7 +77,7 @@ public class ClosestTraderFinder extends TraderFinder {
 
 		sort(ourdists, indices);
 		
-		for (int k = 0; k < topK; k++) {
+		for (int k = 0; k < Math.min(topK, traders.length); k++) {
 			int index = indices[k];
 			if (isClosest(dists[index]))
 				return index;
