@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
+import cell.sim.Player.Direction;
+
 
 public class Player implements cell.sim.Player, Logger {
 	
@@ -77,6 +79,16 @@ public class Player implements cell.sim.Player, Logger {
 			{
 				max=sack[color];
 				chosen=n;
+			}
+		}
+		if(chosen==null){
+			for (;;) {
+				Direction tempdir = randomDirection();
+				int[] new_location = move(location, dir);
+				int color = color(new_location, board);
+				if (color >= 0 && sack[color] != 0) {
+					chosen=new Node(new_location[0],new_location[1],color);
+				}
 			}
 		}
 		log("chosen:"+Arrays.toString(chosen.getLocation()));
@@ -216,5 +228,55 @@ public class Player implements cell.sim.Player, Logger {
 		else
 			return false;
 	}
+	
+	private Direction randomDirection()
+	{
+		switch(gen.nextInt(6)) {
+			case 0: return Direction.E;
+			case 1: return Direction.W;
+			case 2: return Direction.SE;
+			case 3: return Direction.S;
+			case 4: return Direction.N;
+			case 5: return Direction.NW;
+			default: return null;
+		}
+	}
 
+	private static int[] move(int[] location, Player.Direction dir)
+	{
+		int di, dj;
+		int i = location[0];
+		int j = location[1];
+		if (dir == Player.Direction.W) {
+			di = 0;
+			dj = -1;
+		} else if (dir == Player.Direction.E) {
+			di = 0;
+			dj = 1;
+		} else if (dir == Player.Direction.NW) {
+			di = -1;
+			dj = -1;
+		} else if (dir == Player.Direction.N) {
+			di = -1;
+			dj = 0;
+		} else if (dir == Player.Direction.S) {
+			di = 1;
+			dj = 0;
+		} else if (dir == Player.Direction.SE) {
+			di = 1;
+			dj = 1;
+		} else return null;
+		int[] new_location = {i + di, j + dj};
+		return new_location;
+	}
+	
+	private static int color(int[] location, int[][] board)
+	{
+		int i = location[0];
+		int j = location[1];
+		int dim2_1 = board.length;
+		if (i < 0 || i >= dim2_1 || j < 0 || j >= dim2_1)
+			return -1;
+		return board[i][j];
+	}
 }

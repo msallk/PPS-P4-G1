@@ -27,7 +27,9 @@ public class Path implements Comparable<Path>, Cloneable{
 
 	public Object clone(){
 		try {
-			return super.clone();
+			Path newPath=(Path) super.clone();
+			newPath.locs=(ArrayList<Node>) locs.clone();
+			return newPath;
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
 		}
