@@ -3,7 +3,6 @@ package cell.g3;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +11,7 @@ import java.util.Set;
 
 public class MapAnalyzer
 {
+	public static boolean MAPANALYZER_DEBUG = false;
 	int[][] board;
 	int radius;
 	int[] minRequired;
@@ -38,7 +38,7 @@ public class MapAnalyzer
 
 	private int calculateRadius() {
 		// TODO Auto-generated method stub
-		return 5;
+		return 6;
 	}
 
 	Map<Integer[], Integer> neighbors(int[] location)
@@ -93,7 +93,7 @@ public class MapAnalyzer
 	{
 		if(radius == 0)
 		{
-//			System.out.println("DEBUG: can't call neighborsAtDistance() for radius 0");
+			maLogln("can't call neighborsAtDistance() for radius 0");
 			return null;
 		}
 
@@ -106,12 +106,16 @@ public class MapAnalyzer
 			visitedLocations.add(en);
 		}
 		history.put(map, 1);
+		for(Integer[] e : map.keySet())
+		{
+			maLogln(">>  "+e[0] + " " + e[1]);
+		}
 
 		for(int i = 0; i < radius-1; i++)
 		{
 			for(Map.Entry<Integer[], Integer> entry : map.entrySet())
 			{
-//				System.out.println(entry.getValue() + " radius : " + (i+1));
+				maLogln(entry.getValue() + " radius : " + (i+1));
 			}
 			tempNeighborsMap = new HashMap<Integer[], Integer>();
 			outerNeighborsMap = new HashMap<Integer[], Integer>();
@@ -127,42 +131,31 @@ public class MapAnalyzer
 					{
 						outerNeighborsMap.put(m.getKey(), m.getValue());
 						visitedLocations.add((Integer[])m.getKey());
-//						System.out.println("location: " + m.getKey()[1] + "," + m.getKey()[0] + " : color: " + m.getValue() + " ref:" + m);
+						maLogln("location: " + m.getKey()[1] + "," + m.getKey()[0] + " : color: " + m.getValue() + " ref:" + m);
 					}
-					else
-					{
-						int xx = 8; //for debugger/breakpoints
-						xx = 7;
-					}
+//					else
+//					{
+//						int xx = 8; //for debugger/breakpoints
+//						xx = 7;
+//					}
 				}
 			}
 
+			map = new HashMap<Integer[], Integer>();
 			map.clear();
 			//map = new HashMap<Integer[], Integer>();
 			map.putAll(outerNeighborsMap);
 			outerNeighborsMap.clear();
 			//outerNeighborsMap = new HashMap<Integer[], Integer>();
+			for(Integer[] e : map.keySet())
+			{
+				maLogln(">>  "+e[0] + " " + e[1]);
+			}
 			history.put(map, i+1);
 		}
 
 		return map;
 	}
-
-
-	////////////////
-	//	Map<Integer[], Integer> initialize(int[] location)
-	//	{
-	//		Map<Integer[], Integer> map = neighbors(location);
-	//		for(Map.Entry entry : map.entrySet())
-	//		{
-	//			minRequired[(Integer)entry.getValue()] = 1;
-	//			visitedLocations.add((Integer[])entry.getKey());
-	//		}
-	//		return map;
-	//	}
-
-	/////
-	//	TODO MAX.
 
 	void computeMinThreshold(int[] currentLocation, int radius)
 	{
@@ -192,80 +185,36 @@ public class MapAnalyzer
 			}
 		}
 		//not straight paths
+		int radDEBUG = 1;
 		for(Map<Integer[], Integer> hist : history.keySet())
 		{
+			maLogln("rad " + radDEBUG++);
 			for(Map.Entry<Integer[], Integer> entry : hist.entrySet())
 			{
 				if(!straightPath((Integer[])entry.getKey()))
 				{
+					maLogln(">not straight>  " + entry.getKey()[0] + " " + entry.getKey()[1]);
 					//visitedLocations.add((Integer[])entry.getKey());
-					int count = countSameColorMultiPath(getLevels(wrapIntegerToIntArray(entry.getKey())), Player.color(wrapIntegerToIntArray(entry.getKey()), board));
+					List<List<Integer[]>> levels = getLevels(wrapIntegerToIntArray(entry.getKey()));
+					for(List<Integer[]> outer : levels)
+					{
+						for(Integer[] inner : outer)
+						{
+							maLog(inner[0] + " " + inner[1] + " | ");
+						}
+						maLogln("");
+					}
+					int count = countSameColorMultiPath(levels, Player.color(wrapIntegerToIntArray(entry.getKey()), board));
 					if(count > minRequired[(Integer)entry.getValue()])
 					{
 						minRequired[(Integer)entry.getValue()] = count;
 					}
 				}
-				//else
-				//System.out.println("DEBUG Problems in computeMinThreshold()");
+//				else
+//					maLogln("Problems in computeMinThreshold()");
 			}
 		}
 	}
-
-
-
-
-	//	Map<Integer[], Integer> expandRadius(Map<Integer[], Integer> map)
-	//	{
-	/*Map<Integer[], Integer> tempNeighborsMap = new HashMap<Integer[], Integer>();
-		Map<Integer[], Integer> outerNeighborsMap = new HashMap<Integer[], Integer>();
-		for(Map.Entry<Integer[], Integer> entry : map.entrySet())
-		{
-			tempNeighborsMap = neighbors(wrapIntegerToIntArray((Integer[])entry.getKey()));
-
-			for(Map.Entry<Integer[], Integer> m : tempNeighborsMap.entrySet())
-			{
-				if(!visitedLocations.contains(m) && !outerNeighborsMap.containsKey(m.getKey()))
-				{
-					outerNeighborsMap.put(m.getKey(), m.getValue());
-				}
-			}
-		}	*/
-	//check for straight paths
-	/*for(Map.Entry<Integer[], Integer> entry : outerNeighborsMap.entrySet())
-		{		
-				if(straightPath((Integer[])entry.getKey()))
-				{
-					visitedLocations.add((Integer[])entry.getKey());
-					int count = countSameColorStraightPath(entry);
-					if(count > minRequired[(Integer)entry.getValue()])
-					{
-						minRequired[(Integer)entry.getValue()] = count;
-					}
-				}
-				else
-					continue;
-		}
-
-//		TODO Done with straight paths... add code for outer neighbors that have more than 1 shortest paths to dem thru currentLocation.  MAX.
-		for(Map.Entry<Integer[], Integer> entry : outerNeighborsMap.entrySet())
-		{
-			if(!visitedLocations.contains(entry.getKey()))
-			{
-				visitedLocations.add((Integer[])entry.getKey());
-				int count = countSameColorMultiPath2(entry);
-				if(count > minRequired[(Integer)entry.getValue()])
-				{
-					minRequired[(Integer)entry.getValue()] = count;
-				}
-			}
-			else
-				continue;
-		}*/
-
-
-	//		return map;
-	//	}
-	//////////////////
 
 	int countSameColorMultiPath(List<List<Integer[]>> levels, int color)
 	{
@@ -288,6 +237,17 @@ public class MapAnalyzer
 		return count;
 	}
 
+	/**
+	 * 
+	 * 6\1| 2
+	 *   \|
+	 * -------
+	 *    |\ 
+	 *  5 |4\ 3
+	 * 
+	 * @param destination
+	 * @return
+	 */
 	List<List<Integer[]>> getLevels(int[] destination) // returns the levels and their co-ordinates
 	{
 		List<List<Integer[]>> list = new ArrayList<List<Integer[]>>();
@@ -335,7 +295,7 @@ public class MapAnalyzer
 			for(int i = 1; i <= noOfLevels; i ++)
 			{
 				List<Integer[]> levelList = new ArrayList<Integer[]>();
-				for(int x_ = 0; x_ < (-dx); x_ ++)
+				for(int x_ = 0; x_ <= (-dx); x_ ++)
 				{
 					int[] point = new int[] {currentLocation[0] - i, currentLocation[1] - x_};
 					if(isContainedParallelogramHorizontalLevels(destination, currentLocation, point))
@@ -352,10 +312,10 @@ public class MapAnalyzer
 			for(int i = 1; i <= noOfLevels; i ++)
 			{
 				List<Integer[]> levelList = new ArrayList<Integer[]>();
-				for(int x_ = 0; x_ < dx; x_ ++)
+				for(int x_ = 0; x_ <= dx; x_ ++)
 				{
 					int[] point = new int[] {currentLocation[0] + i, currentLocation[1] + x_};
-					if(isContainedParallelogramHorizontalLevels(destination, currentLocation, point))
+					if(isContainedParallelogramHorizontalLevels(currentLocation, destination, point))
 						levelList.add(wrapIntToIntegerArray(point));
 				}
 				list.add(levelList);
@@ -369,10 +329,10 @@ public class MapAnalyzer
 			for(int i = 1; i <= noOfLevels; i ++)
 			{
 				List<Integer[]> levelList = new ArrayList<Integer[]>();
-				for(int y_ = 0; y_ < (dy); y_ ++)
+				for(int y_ = 0; y_ <= (dy); y_ ++)
 				{
 					int[] point = new int[] {currentLocation[0] + y_, currentLocation[1] + i};
-					if(isContainedRectangle(destination, currentLocation, point))
+					if(isContainedParallelogramVerticalLevels(currentLocation, destination, point))
 						levelList.add(wrapIntToIntegerArray(point));
 				}
 				list.add(levelList);
@@ -386,10 +346,10 @@ public class MapAnalyzer
 			for(int i = 1; i <= noOfLevels; i ++)
 			{
 				List<Integer[]> levelList = new ArrayList<Integer[]>();
-				for(int y_ = 0; y_ < (-dy); y_ ++)
+				for(int y_ = 0; y_ <= (-dy); y_ ++)
 				{
 					int[] point = new int[] {currentLocation[0] - y_, currentLocation[1] - i};
-					if(isContainedRectangle(destination, currentLocation, point))
+					if(isContainedParallelogramVerticalLevels(destination, currentLocation, point))
 						levelList.add(wrapIntToIntegerArray(point));
 				}
 				list.add(levelList);
@@ -398,7 +358,7 @@ public class MapAnalyzer
 		}
 		else
 		{
-//			System.out.println("DEBUG Problems in getLevels()");
+			maLogln("Problems in getLevels()");
 			return null;
 		}
 	}
@@ -413,18 +373,18 @@ public class MapAnalyzer
 	 * @param topLeft Case 1: dest.  Case 4: currentLocation
 	 * @param bottomRight Case 1: currentLocation.  Case 4: destination
 	 * @param point
-	 * @return True if contained in parallelogram, false otherwise. not defined if one of the corners
+	 * @return True if contained in parallemaLogram, false otherwise. not defined if one of the corners
 	 */
 	boolean isContainedParallelogramHorizontalLevels(int[] topLeft, int[] bottomRight, int[] point)
 	{
 		//make sure point is not one of the two corners
 		if((point[0] == topLeft[0] && point[1] == topLeft[1]) || (point[0] == bottomRight[0] && point[1] == bottomRight[1]))
 		{
-//			System.out.println("DEBUG Problems in isContained()");
+			maLogln("Problems in isContained()");
 			System.exit(1);
 		}
 		//if point is out of bounds of containing rectangle
-		if(point[0] <= topLeft[0] || point[0] >= bottomRight[0] || point[1] <= topLeft[1] || point[1] >= bottomRight[1])
+		if(point[0] <= topLeft[0] || point[0] >= bottomRight[0] || point[1] < topLeft[1] || point[1] > bottomRight[1])
 			return false;
 
 		int DY = Math.abs(topLeft[0] - bottomRight[0]);
@@ -449,18 +409,18 @@ public class MapAnalyzer
 	 * @param topLeft Case 6: dest.  Case 3: currentLocation
 	 * @param bottomRight Case 6: currentLocation.  Case 3: destination
 	 * @param point
-	 * @return True if contained in parallelogram, false otherwise. not defined if one of the corners
+	 * @return True if contained in parallemaLogram, false otherwise. not defined if one of the corners
 	 */
 	boolean isContainedParallelogramVerticalLevels(int[] topLeft, int[] bottomRight, int[] point)
 	{
 		//make sure point is not one of the two corners
 		if((point[0] == topLeft[0] && point[1] == topLeft[1]) || (point[0] == bottomRight[0] && point[1] == bottomRight[1]))
 		{
-//			System.out.println("DEBUG Problems in isContained()");
+			maLogln("Problems in isContained()");
 			System.exit(1);
 		}
 		//if point is out of bounds of containing rectangle
-		if(point[0] <= topLeft[0] || point[0] >= bottomRight[0] || point[1] <= topLeft[1] || point[1] >= bottomRight[1])
+		if(point[0] < topLeft[0] || point[0] > bottomRight[0] || point[1] <= topLeft[1] || point[1] >= bottomRight[1])
 			return false;
 
 
@@ -491,7 +451,7 @@ public class MapAnalyzer
 		//make sure point is not one of the two corners
 		if((point[0] == bottomLeft[0] && point[1] == bottomLeft[1]) || (point[0] == topRight[0] && point[1] == topRight[1]))
 		{
-//			System.out.println("DEBUG Problems in isContained()");
+			maLogln("Problems in isContained()");
 			System.exit(1);
 		}
 		if(point[1] >= bottomLeft[1] && point[1] <= topRight[1] && point[0] >= topRight[0] && point[0] <= bottomLeft[0]) //switched 0/1
@@ -499,79 +459,6 @@ public class MapAnalyzer
 		return false;
 	}
 
-	//TODO   make same for max, more than radius of 2
-	//	int countSameColorMultiPath2(Map.Entry<Integer[], Integer> entry)
-	//	{
-	//		int radius = 2;
-	//		int count = 1;
-	//		int dx = entry.getKey()[0] - currentLocation[0];
-	//		int dy = entry.getKey()[1] - currentLocation[1];
-	//		int color = entry.getValue();
-	//		
-	//		if(dx < 0 && dy < 0 && dy < dx) //case 1
-	//		{
-	//			int colorW = Player.color(new int[]{currentLocation[0]-1, currentLocation[1]}, board);
-	//			int colorNW = Player.color(new int[]{currentLocation[0]-1, currentLocation[1]-1}, board);
-	//			if(colorW == color && colorNW == color) //both (next steps on) shortest paths are same color as cell 2 spots away
-	//			{
-	//				if(count < radius)  /* unnecessary check */
-	//					count++;
-	//			}
-	//		}
-	//		else if(dx < 0 && dy < 0 && dx < dy) //case 2
-	//		{
-	//			int colorN = Player.color(new int[]{currentLocation[0], currentLocation[1]-1}, board);
-	//			int colorNW = Player.color(new int[]{currentLocation[0]-1, currentLocation[1]-1}, board);
-	//			if(colorN == color && colorNW == color) //both next steps on shortest path are same color as cell 2 spots away
-	//			{
-	//				if(count < radius)
-	//					count++;
-	//			}
-	//		}
-	//		else if(dx > 0 && dy > 0 && dy > dx) //case 4 
-	//		{
-	//			int colorE = Player.color(new int[]{currentLocation[0]+1, currentLocation[1]}, board);
-	//			int colorSE = Player.color(new int[]{currentLocation[0]+1, currentLocation[1]+1}, board);
-	//			if(colorE == color && colorSE == color) //both next steps on shortest path are same color as cell 2 spots away
-	//			{
-	//				if(count < radius)
-	//					count++;
-	//			}
-	//		}
-	//		else if(dx > 0 && dy > 0 && dy < dx) //case 5
-	//		{
-	//			int colorS = Player.color(new int[]{currentLocation[0], currentLocation[1]+1}, board);
-	//			int colorSE = Player.color(new int[]{currentLocation[0]+1, currentLocation[1]+1}, board);
-	//			if(colorS == color && colorSE == color) //both next steps on shortest path are same color as cell 2 spots away
-	//			{
-	//				if(count < radius)
-	//					count++;
-	//			}
-	//		}
-	//		else if(dx < 0 && dy > 0) //case 3
-	//		{
-	//			int colorE = Player.color(new int[]{currentLocation[0]+1, currentLocation[1]}, board);
-	//			int colorN = Player.color(new int[]{currentLocation[0], currentLocation[1]-1}, board);
-	//			if(colorE == color && colorN == color) //both next steps on shortest path are same color as cell 2 spots away
-	//			{
-	//				if(count < radius)
-	//					count++;
-	//			}
-	//		}
-	//		else if(dx > 0 && dy < 0) //case 6
-	//		{
-	//			int colorW = Player.color(new int[]{currentLocation[0]-1, currentLocation[1]}, board);
-	//			int colorS = Player.color(new int[]{currentLocation[0], currentLocation[1]+1}, board);
-	//			if(colorW == color && colorS == color) //both next steps on shortest path are same color as cell 2 spots away
-	//			{
-	//				if(count < radius)
-	//					count++;
-	//			}
-	//		}
-	//		else
-	//			System.err.println("DEBUG Problems in countSameColorMultiPath2()");
-	//		return count;
-	//	}
 
 	int[] countSameColorStraightPath(Map.Entry<Integer[], Integer> entry)
 	{
@@ -643,8 +530,8 @@ public class MapAnalyzer
 				}
 			}
 		}
-//		else
-//			System.err.println("DEBUG Problems in countSameColorStraighPath()");
+		else
+			maLogln("Problems in countSameColorStraighPath()");
 		return count;
 	}
 
@@ -656,20 +543,28 @@ public class MapAnalyzer
 			return true;
 		return false;
 	}
-
-
-
-
+	
+	public void maLog(Object o)
+	{
+		if(MAPANALYZER_DEBUG && Player.DEBUG)
+		{
+			System.out.print("maLogDEBUG<P-" + player.name() + "><C-" + Player.color(currentLocation, board) + "> " + o);
+		}
+	}
+	public void maLogln(Object o)
+	{
+		if(MAPANALYZER_DEBUG && Player.DEBUG)
+		{
+			System.out.println("maLogDEBUG<" + player.name() + "> " + o);
+		}
+	}
 } // end MapAnalyzer class
-
-
 
 class Wrap
 {
 	Integer[] data;
 	public Wrap(Integer[] d)
 	{
-		//System.out.println("contructed");
 		data = new Integer[d.length];
 		for(int i = 0; i < d.length; i++)
 		{
@@ -683,11 +578,9 @@ class Wrap
 		{
 			if(new Wrap(y).equals(new Wrap(entry)))
 			{
-				//System.out.println("wow");
 				return true;
 			}
 		}
-		//System.out.println(".");
 		return false;
 	}
 
@@ -696,40 +589,179 @@ class Wrap
 		for(Integer[] y : hs.keySet())
 		{
 			if(new Wrap(y).equals(new Wrap(key)))
-			{
-				//System.out.println("wow");
 				return true;
-			}
 		}
-		//System.out.println(".");
 		return false;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
-		{
-			//			System.out.println("case 1");
 			return true;
-		}
 		if (obj == null)
-		{
-			//System.out.println("case 2");
 			return false;
-		}
 		if (getClass() != obj.getClass())
-		{
-			//System.out.println("case 3");
 			return false;
-		}
 		Wrap other = (Wrap) obj;
 		if (!Arrays.equals(data, other.data))
-		{
-			//System.out.println("case 4");
 			return false;
-		}
-		//System.out.println("case 5");
 		return true;
 	}
-
 }
+
+
+
+
+
+
+
+//	int countSameColorMultiPath2(Map.Entry<Integer[], Integer> entry)
+//	{
+//		int radius = 2;
+//		int count = 1;
+//		int dx = entry.getKey()[0] - currentLocation[0];
+//		int dy = entry.getKey()[1] - currentLocation[1];
+//		int color = entry.getValue();
+//		
+//		if(dx < 0 && dy < 0 && dy < dx) //case 1
+//		{
+//			int colorW = Player.color(new int[]{currentLocation[0]-1, currentLocation[1]}, board);
+//			int colorNW = Player.color(new int[]{currentLocation[0]-1, currentLocation[1]-1}, board);
+//			if(colorW == color && colorNW == color) //both (next steps on) shortest paths are same color as cell 2 spots away
+//			{
+//				if(count < radius)  /* unnecessary check */
+//					count++;
+//			}
+//		}
+//		else if(dx < 0 && dy < 0 && dx < dy) //case 2
+//		{
+//			int colorN = Player.color(new int[]{currentLocation[0], currentLocation[1]-1}, board);
+//			int colorNW = Player.color(new int[]{currentLocation[0]-1, currentLocation[1]-1}, board);
+//			if(colorN == color && colorNW == color) //both next steps on shortest path are same color as cell 2 spots away
+//			{
+//				if(count < radius)
+//					count++;
+//			}
+//		}
+//		else if(dx > 0 && dy > 0 && dy > dx) //case 4 
+//		{
+//			int colorE = Player.color(new int[]{currentLocation[0]+1, currentLocation[1]}, board);
+//			int colorSE = Player.color(new int[]{currentLocation[0]+1, currentLocation[1]+1}, board);
+//			if(colorE == color && colorSE == color) //both next steps on shortest path are same color as cell 2 spots away
+//			{
+//				if(count < radius)
+//					count++;
+//			}
+//		}
+//		else if(dx > 0 && dy > 0 && dy < dx) //case 5
+//		{
+//			int colorS = Player.color(new int[]{currentLocation[0], currentLocation[1]+1}, board);
+//			int colorSE = Player.color(new int[]{currentLocation[0]+1, currentLocation[1]+1}, board);
+//			if(colorS == color && colorSE == color) //both next steps on shortest path are same color as cell 2 spots away
+//			{
+//				if(count < radius)
+//					count++;
+//			}
+//		}
+//		else if(dx < 0 && dy > 0) //case 3
+//		{
+//			int colorE = Player.color(new int[]{currentLocation[0]+1, currentLocation[1]}, board);
+//			int colorN = Player.color(new int[]{currentLocation[0], currentLocation[1]-1}, board);
+//			if(colorE == color && colorN == color) //both next steps on shortest path are same color as cell 2 spots away
+//			{
+//				if(count < radius)
+//					count++;
+//			}
+//		}
+//		else if(dx > 0 && dy < 0) //case 6
+//		{
+//			int colorW = Player.color(new int[]{currentLocation[0]-1, currentLocation[1]}, board);
+//			int colorS = Player.color(new int[]{currentLocation[0], currentLocation[1]+1}, board);
+//			if(colorW == color && colorS == color) //both next steps on shortest path are same color as cell 2 spots away
+//			{
+//				if(count < radius)
+//					count++;
+//			}
+//		}
+//		else
+//			System.err.println("DEBUG Problems in countSameColorMultiPath2()");
+//		return count;
+//	}
+
+
+
+
+
+
+
+
+//Map<Integer[], Integer> expandRadius(Map<Integer[], Integer> map)
+//	{
+/*Map<Integer[], Integer> tempNeighborsMap = new HashMap<Integer[], Integer>();
+	Map<Integer[], Integer> outerNeighborsMap = new HashMap<Integer[], Integer>();
+	for(Map.Entry<Integer[], Integer> entry : map.entrySet())
+	{
+		tempNeighborsMap = neighbors(wrapIntegerToIntArray((Integer[])entry.getKey()));
+
+		for(Map.Entry<Integer[], Integer> m : tempNeighborsMap.entrySet())
+		{
+			if(!visitedLocations.contains(m) && !outerNeighborsMap.containsKey(m.getKey()))
+			{
+				outerNeighborsMap.put(m.getKey(), m.getValue());
+			}
+		}
+	}	*/
+//check for straight paths
+/*for(Map.Entry<Integer[], Integer> entry : outerNeighborsMap.entrySet())
+	{		
+			if(straightPath((Integer[])entry.getKey()))
+			{
+				visitedLocations.add((Integer[])entry.getKey());
+				int count = countSameColorStraightPath(entry);
+				if(count > minRequired[(Integer)entry.getValue()])
+				{
+					minRequired[(Integer)entry.getValue()] = count;
+				}
+			}
+			else
+				continue;
+	}
+
+//	TODO Done with straight paths... add code for outer neighbors that have more than 1 shortest paths to dem thru currentLocation.  MAX.
+	for(Map.Entry<Integer[], Integer> entry : outerNeighborsMap.entrySet())
+	{
+		if(!visitedLocations.contains(entry.getKey()))
+		{
+			visitedLocations.add((Integer[])entry.getKey());
+			int count = countSameColorMultiPath2(entry);
+			if(count > minRequired[(Integer)entry.getValue()])
+			{
+				minRequired[(Integer)entry.getValue()] = count;
+			}
+		}
+		else
+			continue;
+	}*/
+
+
+//		return map;
+//	}
+//////////////////
+
+
+
+
+
+////////////////
+//	Map<Integer[], Integer> initialize(int[] location)
+//	{
+//		Map<Integer[], Integer> map = neighbors(location);
+//		for(Map.Entry entry : map.entrySet())
+//		{
+//			minRequired[(Integer)entry.getValue()] = 1;
+//			visitedLocations.add((Integer[])entry.getKey());
+//		}
+//		return map;
+//	}
+
+/////

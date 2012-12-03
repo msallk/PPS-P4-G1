@@ -1,29 +1,27 @@
 package cell.g3;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 public class Player implements cell.sim.Player {
 
+	public static boolean DEBUG = true;
+	public static boolean PLAYER_DEBUG = false;
 	public Random gen = new Random();
 	public int[] savedSack;
 	public static int versions = 0;
 	public int version = ++versions;
-
 	public int quadCount = 0;
-	
 	public int[][] board;
 	public int[] currentLocation;
 	public int[] nextLocation;
-
+	public int[][] traders;
+	public int[][] players;
+	
 	//TODO: Map-analysis, so as to generate the nextThreshold --> threshold for getting to the immediate next leprechaun
 											//	globalThreshod --> depends on the state of the sack and location on map
 											// 	to decide what to use.. next or global...
-	public int[] maxNextThreshold = new int[] {9,9,9,9,9,9};
-	public int[] minNextThreshold = new int[] {6,6,6,6,6,6};
+//	public int[] maxNextThreshold = new int[] {9,9,9,9,9,9};
+	public int[] minNextThreshold = new int[] {-1,-1,-1,-1,-1,-1};
 	
 
 	public String name() { return "G3" + (version != 1 ? " v" + version : ""); }
@@ -31,27 +29,28 @@ public class Player implements cell.sim.Player {
 	public Direction move(int[][] board, int[] location, int[] sack,
 	                      int[][] players, int[][] traders)
 	{
+		this.players = copyII(players);
+		this.traders = copyII(traders);
 		this.board = copyII(board);
 		this.currentLocation = copyI(location);
-		
-		Mover mover = new Mover(copyI(this.currentLocation), copyII(this.board), copyII(traders), copyI(sack));
-		
+		pLogln("PLAYER MOVE fn");
 		savedSack = copyI(sack);
+		
 		if (quadCount == 0)
 			quadCount = 4 * sack[0];
-
+		
+		Mover mover = new Mover(this);
 		for (;;) {
 			Direction dir = mover.getNextStep();
 			int[] new_location = move(location, dir);
 			int color = color(new_location, board);
-//			System.out.println("new loc: " + new_location + ". color: " + color + ". No of that color: " + sack[color]);
+			pLogln("new loc: " + new_location + ". color: " + color + ". No of that color: " + sack[color]);
 			if (color >= 0 && sack[color] != 0) {
 				savedSack[color]--;
 				nextLocation = move(currentLocation, dir); //store next location to compute min thresholds
 				return dir;
 			}
 		}
-		
 	}
 
 	public static Direction randomDirection(Random gen)
@@ -74,10 +73,9 @@ public class Player implements cell.sim.Player {
 		MapAnalyzer ma = new MapAnalyzer(board, nextLocation, this);
 		minNextThreshold = ma.getMinRequired();
 		///
-//		System.out.println("we ( " + name() + " ) are on color " + color(nextLocation, board));
-//		System.out.println("current: " + currentLocation + ". next: " + nextLocation);
+		pLogln("current: " + currentLocation + ". next: " + nextLocation);
 		for(int i : minNextThreshold)
-//			System.out.println("min threshhold for" + name() + " " + i);
+			pLogln("min threshhold for" + name() + " " + i);
 		///
 		
 		
@@ -251,11 +249,26 @@ public class Player implements cell.sim.Player {
 		return nextLocation;
 	}
 
-	public int[] getMaxNextThreshold() {
-		return maxNextThreshold;
-	}
+//	public int[] getMaxNextThreshold() {
+//		return maxNextThreshold;
+//	}
 
 	public int[] getMinNextThreshold() {
 		return minNextThreshold;
+	}
+	
+	public void pLog(Object o)
+	{
+		if(PLAYER_DEBUG && DEBUG)
+		{
+			System.out.print("pLogDEBUG<P-" + name() + "><C-" + color(currentLocation, board) + "> " + o);
+		}
+	}
+	public void pLogln(Object o)
+	{
+		if(PLAYER_DEBUG && DEBUG)
+		{
+			System.out.println("pLogDEBUG<" + name() + "> " + o);
+		}
 	}
 }

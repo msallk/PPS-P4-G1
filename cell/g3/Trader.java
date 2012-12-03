@@ -1,8 +1,11 @@
 package cell.g3;
 
+import java.util.Arrays;
+
 public class Trader
 {
 	Player player;
+	public static boolean TRADER_DEBUG = false;
 	
 	public Trader(Player p)
 	{
@@ -31,7 +34,7 @@ public class Trader
 		}
 
 		if (giveVal >= requestVal && giveVal > 0) {
-//			System.out.println("DEBUG Winning Trade " + giveVal + " " + requestVal);
+			tLogln("Winning Trade " + giveVal + " " + requestVal);
 			return true;
 		}
 
@@ -42,6 +45,7 @@ public class Trader
 	// If some marbles are below threshold, we need to save the player even if it is a lossy trade.
 	//    return true and set player-level request and give arrays accordingly.
 	// Else return false.
+	/*
 	public Boolean savingTrade(double[] rate, int[] request, int[] give)
 	{
 		Boolean save = false;
@@ -80,18 +84,18 @@ public class Trader
 			}
 
 			if (giveVal >= requestVal && giveVal > 0) {
-//				System.out.println("DEBUG Saving Trade " + giveVal + " " + requestVal);
+				player.tLogln("Saving Trade " + giveVal + " " + requestVal);
 				return true;
 			}
 		}
 
 		return false;
-	}
+	}*/
 
 	private Boolean needToSave(int[] sack)
 	{
 		for (int i = 0; i < sack.length; i++) {
-			if (sack[i] < player.minNextThreshold[i]) //was max
+			if (sack[i] < player.minNextThreshold[i])
 				return true;
 		}
 		return false;
@@ -121,13 +125,13 @@ public class Trader
 				reqColor = colors[i];
 
 				if ((changedSack[reqColor] < player.minNextThreshold[reqColor]) &&
-					(changedSack[giveColor] >= player.minNextThreshold[giveColor] + 1) &&
-					(requestVal + rate[reqColor] <= giveVal + 
-						((changedSack[giveColor]-player.minNextThreshold[giveColor]-1)*rate[giveColor]))) {
+					(changedSack[giveColor] > player.minNextThreshold[giveColor]) &&
+					((requestVal + rate[reqColor] - giveVal) / rate[giveColor] <= 
+						changedSack[giveColor] - player.minNextThreshold[giveColor])) {
 					request[reqColor]++;
 					changedSack[reqColor]++;
 					requestVal += rate[reqColor];
-					giveCount = (int)((requestVal - giveVal) / rate[giveColor]) + 1;
+					giveCount = (int)Math.ceil((requestVal - giveVal) / rate[giveColor]);
 					give[giveColor] += giveCount;
 					changedSack[giveColor] -= giveCount;
 					giveVal += giveCount * rate[giveColor]; 
@@ -135,36 +139,38 @@ public class Trader
 			}	
 		}
 
-//		System.out.print("DEBUG Init ");
-		for (i = 0; i < rate.length; i++)
-//			System.out.print(player.savedSack[i] + " ");
-//		System.out.println();
-//		System.out.print("DEBUG Give ");
-		for (i = 0; i < rate.length; i++)
-//			System.out.print(give[i] + " ");
-//		System.out.println();
-//		System.out.print("DEBUG Receive ");
-		for (i = 0; i < rate.length; i++)
-//			System.out.print(request[i] + " ");
-//		System.out.println();
-//		System.out.print("DEBUG Net ");
-		for (i = 0; i < rate.length; i++)
-//			System.out.print(changedSack[i] + " ");
-//		System.out.println();
+		tLogln("Save Trade " + giveVal + " " + requestVal);
 
 		for (i = 0; i < rate.length; i ++) {
-			if (i == minColor || changedSack[i] <= player.minNextThreshold[i]) {}
-			else {
+			if (i != minColor && changedSack[i] > player.minNextThreshold[i]) {
 				giveCount = changedSack[i] - player.minNextThreshold[i];
 				give[i] += giveCount;
+				giveVal += giveCount * rate[i];
 				reqCount = (int)(giveCount * rate[i] / rate[minColor]);
 				request[minColor] += reqCount;
-				giveVal += giveCount * rate[i];
 				requestVal += reqCount * rate[minColor];
 			}
 		}
 
-//		System.out.println("DEBUG Greedy Trade " + giveVal + " " + requestVal);
+		// For some unclear situations where we're giving away too much.
+		while (giveVal - requestVal > 2) {
+			request[minColor]++;
+			requestVal += rate[minColor];
+		}
+
+		// For some unclear situations where we're not giving enough.
+		while (giveVal < requestVal) {
+			colors = sortedColors(changedSack, rate);
+			for (i = 0; i < rate.length; i++) {
+				if (request[colors[i]] > 0) {
+					request[colors[i]]--;
+					requestVal -= rate[colors[i]];
+					break;
+				}
+			}
+		}
+
+		tLogln("Greedy Trade loss " + (giveVal - requestVal));
 	}
 
 	private double maxValue(double[] a)
@@ -199,5 +205,20 @@ public class Trader
 		}
 
 		return colors;
+	}
+	
+	public void tLog(Object o)
+	{
+		if(TRADER_DEBUG && Player.DEBUG)
+		{
+			System.out.print("pLogDEBUG<P-" + player.name() + "><C-" + Player.color(player.currentLocation, player.board) + "> " + o);
+		}
+	}
+	public void tLogln(Object o)
+	{
+		if(TRADER_DEBUG && Player.DEBUG)
+		{
+			System.out.println("pLogDEBUG<" + player.name() + "> " + o);
+		}
 	}
 }

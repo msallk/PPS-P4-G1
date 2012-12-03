@@ -1,9 +1,7 @@
 package cell.g3;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -12,24 +10,28 @@ import cell.sim.Player.Direction;
 
 public 	class Mover
 {
+	public static boolean MOVER_DEBUG = false;
 	int[][] board;
 	int[] location;
 	int[][] traders;
 	int[] targetLocation;
 	int[] sack;
-	Direction nextStep;
+	Player player;
+	private Direction nextStep;
 
-	Mover(int[] location, int[][] board, int[][] traders, int[] savedSack)
+	Mover(Player player)
 	{
-		this.board = board;
-		this.sack = savedSack;
-		this.location = location;
-		this.traders = traders;
+		this.player = player;
+		this.board = player.copyII(player.board);
+		this.sack = player.copyI(player.savedSack);
+		this.location = player.copyI(player.currentLocation);
+		this.traders = player.copyII(player.traders);
 		targetLocation = closestTrader();
 		nextStep = nextStep();
 	}
 
 	public Direction getNextStep() {
+		mLogln("nextstep");
 		return nextStepWrapper(nextStep);
 	}
 
@@ -58,10 +60,15 @@ public 	class Mover
 		return false;
 	}
 
-	//TODO: Rank the leprechauns based on proximity to other leps or other players around it and color needed.  dont just pick arbitrarily  
-	private int[] closestTrader()
+	
+	private int distanceBetween(int[] location, int[] targetLocation)
 	{
-		int[] targetLocation;
+		if(location[0] == targetLocation[0] && location[1] == targetLocation[1])
+		{
+			return 0;
+		}
+		
+		//int[] targetLocation;		
 		Set<Integer[]> visitedLocations = new HashSet<Integer[]>();
 		visitedLocations.add(MapAnalyzer.wrapIntToIntegerArray(location));
 
@@ -73,20 +80,110 @@ public 	class Mover
 		for(Integer[] en : map.keySet())
 		{
 			visitedLocations.add(en);
-			if(isTrader(MapAnalyzer.wrapIntegerToIntArray(en)))
-				return targetLocation = MapAnalyzer.wrapIntegerToIntArray(en);
+			if(en[0] == targetLocation[0] && en[1] == targetLocation[1])
+				return 1; //targetLocation = MapAnalyzer.wrapIntegerToIntArray(en);
 		}
 
-		for(int i = 0; ; i++)
+		for(int i = 2; i <= 2*board.length+2; i++)  // loose upper bound (we want farthest possible distance)
 		{
-			if(i > 1000)
+			/*if(i > 1000)
 			{
-//				System.out.println("DEBUG Problem in Looping closestTrader()");
+				mLogln("Problem in Looping closestTrader()");
 				System.exit(1);
-			}
+			}*/
+			
+			/*for(Map.Entry<Integer[], Integer> entry : map.entrySet())
+			{
+				mLogln(entry.getValue() + " radius : " + (i+1));
+			}*/
+
+			tempNeighborsMap = new HashMap<Integer[], Integer>();
+			outerNeighborsMap = new HashMap<Integer[], Integer>();
+
 			for(Map.Entry<Integer[], Integer> entry : map.entrySet())
 			{
-//				System.out.println(entry.getValue() + " radius : " + (i+1));
+				tempNeighborsMap.clear();
+				//tempNeighborsMap = new HashMap<Integer[], Integer>();
+				tempNeighborsMap.putAll(MapAnalyzer.neighbors(MapAnalyzer.wrapIntegerToIntArray((Integer[])entry.getKey()), board));
+				for(Map.Entry<Integer[], Integer> m : tempNeighborsMap.entrySet())
+				{
+					if(!Wrap.contains(visitedLocations, m.getKey()) && !Wrap.contains(outerNeighborsMap, m.getKey()))
+					{
+						outerNeighborsMap.put(m.getKey(), m.getValue());
+						visitedLocations.add((Integer[])m.getKey());
+						//mLogln(" location: " + m.getKey()[0] + "," + m.getKey()[1] + " : color: " + m.getValue() + " ref:" + m);
+						if(m.getKey()[0] == targetLocation[0] && m.getKey()[1] == targetLocation[1])
+							return i;
+					}
+				}
+			}
+
+			map.clear();  //maybe make new map instead as in MapAnalyzer
+			//map = new HashMap<Integer[], Integer>();
+			map.putAll(outerNeighborsMap);
+			outerNeighborsMap.clear();
+			//outerNeighborsMap = new HashMap<Integer[], Integer>();
+		}
+		mLogln("problem in distanceBetween():  distance not found");
+		return -1;
+	}
+	
+	int closestOpponent(int[] traderLoc)
+	{
+		int minDistance = Integer.MAX_VALUE;
+		for(int[] pl : player.players)
+		{
+			if(pl != null)
+			{
+				int dist = distanceBetween(traderLoc, pl);
+				if(dist < minDistance)
+				{
+					minDistance = dist;
+				}
+			}
+		}
+		return minDistance;
+	}
+	
+	//TODO: Rank the leprechauns based on proximity to other leps or other players around it and color needed.  dont just pick arbitrarily  
+	/**
+	 * Pick arbitrary trader that we have the color for, that is closest, and is not closer or as close to another player
+	 * If no traders qualify, go towards middle of board
+	 * @return
+	 */
+	private int[] closestTrader()
+	{
+		mLogln("closest trader");
+		
+		targetLocation = new int[]{player.board.length/2, player.board.length/2};		
+		Set<Integer[]> visitedLocations = new HashSet<Integer[]>();
+		visitedLocations.add(MapAnalyzer.wrapIntToIntegerArray(location));
+
+		Map<Integer[], Integer> tempNeighborsMap;
+		Map<Integer[], Integer> outerNeighborsMap = new HashMap<Integer[], Integer>();
+
+		///first layer of neighbors
+		Map<Integer[], Integer> map = MapAnalyzer.neighbors(location, board);
+		for(Map.Entry<Integer[], Integer> en : map.entrySet())
+		{
+			visitedLocations.add(en.getKey());
+			if(isTrader(MapAnalyzer.wrapIntegerToIntArray(en.getKey())) && sack[en.getValue()] > 0 && closestOpponent(MapAnalyzer.wrapIntegerToIntArray(en.getKey())) > 1)
+			{
+				targetLocation = MapAnalyzer.wrapIntegerToIntArray(en.getKey());
+				return targetLocation;
+			}
+		}
+
+		for(int i = 0; i <= 2*player.board.length; i++)
+		{
+			/*if(i > 1000)
+			{
+				mLogln("Problem in Looping closestTrader()");
+				System.exit(1);
+			}*/
+			for(Map.Entry<Integer[], Integer> entry : map.entrySet())
+			{
+				mLogln(entry.getValue() + " radius : " + (i+1));
 			}
 
 			tempNeighborsMap = new HashMap<Integer[], Integer>();
@@ -103,31 +200,52 @@ public 	class Mover
 					{
 						outerNeighborsMap.put(m.getKey(), m.getValue());
 						visitedLocations.add((Integer[])m.getKey());
-//						System.out.println("location: " + m.getKey()[0] + "," + m.getKey()[1] + " : color: " + m.getValue() + " ref:" + m);
-						if(isTrader(MapAnalyzer.wrapIntegerToIntArray(m.getKey())) && sack[m.getValue()] > 0)
-							return targetLocation = MapAnalyzer.wrapIntegerToIntArray(m.getKey());
+						mLogln(" location: " + m.getKey()[0] + "," + m.getKey()[1] + " : color: " + m.getValue() + " ref:" + m);
+						if(isTrader(MapAnalyzer.wrapIntegerToIntArray(m.getKey())) && sack[m.getValue()] > 0 && closestOpponent(MapAnalyzer.wrapIntegerToIntArray(m.getKey())) > i+2)
+						{
+							targetLocation = MapAnalyzer.wrapIntegerToIntArray(m.getKey());
+							return targetLocation;
+						}
 					}
 				}
 			}
 
-			map.clear();
+			map.clear();  //maybe make new map instead as in MapAnalyzer
 			//map = new HashMap<Integer[], Integer>();
 			map.putAll(outerNeighborsMap);
 			outerNeighborsMap.clear();
 			//outerNeighborsMap = new HashMap<Integer[], Integer>();
 		}
 
-		//return targetLocation;
+		return targetLocation;
+	}
+
+	private Direction randomStep()
+	{
+		Random gen = new Random();
+		Direction dir;
+
+		do 
+		{
+			dir = Player.randomDirection(gen);
+			if(Player.color(Player.move(location, dir), board) >= 0 && sack[Player.color(Player.move(location, dir), board)] > 0)
+				return dir;
+		}
+		while(sack[Player.color(Player.move(location, dir), board)] <= 0);
+
+		return null;
 	}
 
 	/**
 	 * If don't have the marble needed to make the move, keep on randomly picking new direction
-	 * @param firstAttempt
+	 * @param firstAttempt Is null if attempted to move onto same space in nextStep function
 	 * @return
 	 */
 	private Direction nextStepWrapper(Direction firstAttempt)
 	{
 		Random gen = new Random();
+		if(firstAttempt == null)
+			return randomStep();
 		if(sack[Player.color(Player.move(location, firstAttempt), board)] <= 0)
 		{
 			switch(firstAttempt)
@@ -139,16 +257,7 @@ public 	class Mover
 					else if(Player.color(Player.move(location, Direction.E), board) >= 0 && sack[Player.color(Player.move(location, Direction.E), board)] > 0)
 						return Direction.E;
 					else 
-					{
-						Direction dir;
-						do 
-						{
-							dir = Player.randomDirection(gen);
-							if(Player.color(Player.move(location, dir), board) >= 0 && sack[Player.color(Player.move(location, dir), board)] > 0)
-								return dir;
-						}
-						while(sack[Player.color(Player.move(location, dir), board)] <= 0);
-					}
+						return randomStep();
 				}
 				case S: 
 				{
@@ -157,16 +266,7 @@ public 	class Mover
 					else if(Player.color(Player.move(location, Direction.W), board) >= 0 && sack[Player.color(Player.move(location, Direction.W), board)] > 0)
 						return Direction.W;
 					else 
-					{
-						Direction dir;
-						do 
-						{
-							dir = Player.randomDirection(gen);
-							if(Player.color(Player.move(location, dir), board) >= 0 && sack[Player.color(Player.move(location, dir), board)] > 0)
-								return dir;
-						}
-						while(sack[Player.color(Player.move(location, dir), board)] <= 0);
-					}
+						return randomStep();
 				}
 				case W: 
 				{
@@ -175,16 +275,7 @@ public 	class Mover
 					else if(Player.color(Player.move(location, Direction.S), board) >= 0 && sack[Player.color(Player.move(location, Direction.S), board)] > 0)
 						return Direction.S;
 					else 
-					{
-						Direction dir;
-						do 
-						{
-							dir = Player.randomDirection(gen);
-							if(Player.color(Player.move(location, dir), board) >= 0 && sack[Player.color(Player.move(location, dir), board)] > 0)
-								return dir;
-						}
-						while(sack[Player.color(Player.move(location, dir), board)] <= 0);
-					}
+						return randomStep();
 				}
 				case E: 
 				{
@@ -193,16 +284,7 @@ public 	class Mover
 					else if(Player.color(Player.move(location, Direction.SE), board) >= 0 && sack[Player.color(Player.move(location, Direction.SE), board)] > 0)
 						return Direction.SE;
 					else 
-					{
-						Direction dir;
-						do 
-						{
-							dir = Player.randomDirection(gen);
-							if(Player.color(Player.move(location, dir), board) >= 0 && sack[Player.color(Player.move(location, dir), board)] > 0)
-								return dir;
-						}
-						while(sack[Player.color(Player.move(location, dir), board)] <= 0);
-					}
+						return randomStep();
 				}
 				case NW: 
 				{
@@ -211,16 +293,7 @@ public 	class Mover
 					else if(Player.color(Player.move(location, Direction.W), board) >= 0 && sack[Player.color(Player.move(location, Direction.W), board)] > 0)
 						return Direction.W;
 					else 
-					{
-						Direction dir;
-						do 
-						{
-							dir = Player.randomDirection(gen);
-							if(Player.color(Player.move(location, dir), board) >= 0 && sack[Player.color(Player.move(location, dir), board)] > 0)
-								return dir;
-						}
-						while(sack[Player.color(Player.move(location, dir), board)] <= 0);
-					}
+						return randomStep();
 				}
 				case SE: 
 				{
@@ -229,20 +302,11 @@ public 	class Mover
 					else if(Player.color(Player.move(location, Direction.S), board) >= 0 && sack[Player.color(Player.move(location, Direction.S), board)] > 0)
 						return Direction.S;
 					else 
-					{
-						Direction dir;
-						do 
-						{
-							dir = Player.randomDirection(gen);
-							if(Player.color(Player.move(location, dir), board) >= 0 && sack[Player.color(Player.move(location, dir), board)] > 0)
-								return dir;
-						}
-						while(sack[Player.color(Player.move(location, dir), board)] <= 0);
-					}
+						return randomStep();
 				}
 				default:
 				{
-//					System.out.println("DEBUG problem in switch case");
+					mLogln("problem in switch case");
 					return null;
 				}
 			}//end switch
@@ -259,7 +323,7 @@ public 	class Mover
 
 		if(dx == 0 & dy == 0) //same spot
 		{
-//			System.out.println("DEBUG problem with nextStep()");
+			mLogln("problem with nextStep()");
 			return null;
 		}
 
@@ -275,7 +339,7 @@ public 	class Mover
 			}
 			else
 			{
-//				System.out.println("DEBUG Problems in nextStep Case dx == dy");
+				mLogln("Problems in nextStep Case dx == dy");
 				return null;
 			}
 		}
@@ -291,7 +355,7 @@ public 	class Mover
 			}
 			else
 			{
-//				System.out.println("DEBUG Problems in nextStep Case dx == 0");
+				mLogln("Problems in nextStep Case dx == 0");
 				return null;
 			}
 		}
@@ -307,7 +371,7 @@ public 	class Mover
 			}
 			else
 			{
-//				System.out.println("DEBUG Problems in nextStep Case dy == 0");
+				mLogln("Problems in nextStep Case dy == 0");
 				return null;
 			}
 		}
@@ -368,8 +432,23 @@ public 	class Mover
 
 		else
 		{
-//			System.out.println("DEBUG Problems in nextStep()");
+			mLogln("Problems in nextStep()");
 			return null;
+		}
+	}
+	
+	public void mLog(Object o)
+	{
+		if(MOVER_DEBUG && Player.DEBUG)
+		{
+			System.out.print("mLogDEBUG<P-" + player.name() + "><C-" + Player.color(player.currentLocation, board) + "> " + o);
+		}
+	}
+	public void mLogln(Object o)
+	{
+		if(MOVER_DEBUG && Player.DEBUG)
+		{
+			System.out.println("mLogDEBUG<" + player.name() + "> " + o);
 		}
 	}
 }

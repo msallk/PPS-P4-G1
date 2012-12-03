@@ -15,6 +15,50 @@ public class Board {
 		this.board = board;
 	}
 	
+	public int dimension(){
+		return board.length / 2;
+	}
+	
+	public double[] getColorDistribution(){
+		double[] dist= new double[6];
+		for(int i=0; i < board.length ; i++){
+			for(int j=0; j < board[0].length; j++){
+				switch (board[i][j]) {
+				case 0:
+					dist[0]++;
+					break;
+				case 1:
+					dist[1]++;
+					break;
+				case 2:
+					dist[2]++;
+					break;
+				case 3:
+					dist[3]++;
+					break;
+				case 4:
+					dist[4]++;
+					break;
+				case 5:
+					dist[5]++;
+					break;
+				default:
+					break;
+				}
+			}
+		}
+		
+		int sum=0;
+		for(int i=0;i<dist.length;i++){
+			sum+=dist[i];
+		}
+		
+		for(int i=0; i <dist.length;i++){
+			dist[i] /= sum;
+		}
+		return dist;
+	}
+	
 	public int getColor(int[] location) {
 		int i = location[0];
 		int j = location[1];

@@ -50,6 +50,8 @@ public class Game {
 		for (int i = 0; i < traders.length; i++) {
 			if (traders[i][0] != tradersLast[i][0] || traders[i][1] != tradersLast[i][1]) {
 				for (int j = 0; j < players.length; j++) {
+					if (players[j] == null)
+						continue;
 					if (players[j][0] == tradersLast[i][0] && players[j][1] == tradersLast[i][1]) {
 						teams[j].addTrade();
 						break;
