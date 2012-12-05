@@ -63,7 +63,7 @@ public class Player implements cell.sim.Player, Logger {
 			return 1;
 		}
 	}
-
+	
 	public Direction move(int[][] board, int[] location, int[] sack,
 			int[][] players, int[][] traders)
 	{
@@ -99,8 +99,8 @@ public class Player implements cell.sim.Player, Logger {
 		if(routeAnalyzer==null)
 		{		
 			routeAnalyzer=new RouteAnalyzer(graph);
-			routeAnalyzer.findSelfNumber(location, players);
 		}
+		routeAnalyzer.findSelfNumber(location, players);
 		/*	for (int i=0; i<traders.length; i++ )
 		{
 			nextPerTrader.add(graph.getNextStep(location, traders[i]));
@@ -222,7 +222,22 @@ public class Player implements cell.sim.Player, Logger {
 			dir=Player.Direction.SE;
 		} else
 		{
+			
 			System.out.println("You CAN'T move that way!!!");
+			Direction tempdir=null;
+			for (;;) {
+				tempdir = randomDirection();
+				int[] new_location = move(location, tempdir);
+				int color = color(new_location, board);
+				if (color >= 0 && sack[color] != 0) {
+					chosen=new Node(new_location[0],new_location[1],color);
+					System.err.println("current location: "+location[0]+", "+location[1]);
+					System.err.println("random move to: "+new_location[0]+", "+new_location[1]);
+					break;
+				}
+			}
+			dir=tempdir;
+			isFixed=false;
 		}
 
 		if(chosen!=null) 

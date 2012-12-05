@@ -19,6 +19,8 @@ public class RouteAnalyzer implements Logger{
 	{
 		for(int i=0; i<players.length; i++)
 		{
+			if(players[i]==null)
+				continue;
 			if(players[i][0]==self[0] && players[i][1]==self[1])
 			{	
 				selfNumber=i;
@@ -133,11 +135,18 @@ public class RouteAnalyzer implements Logger{
 	}
 
 	private boolean checkOthers1( int[] trader, int[][] players, int distance, boolean checkNextStep) {
+		int count=0;
 		for(int[] p:players){
 			if(p==null)
 				continue;
 			if(p[0]==players[selfNumber][0] && p[1]==players[selfNumber][1])
-				continue;
+			{	
+				if(count==0)
+				{	
+					count++;
+					continue;			
+				}		
+			}
 			int modifier=0;
 			if(checkNextStep)
 				modifier=1;
