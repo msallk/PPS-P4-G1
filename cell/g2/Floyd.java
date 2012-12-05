@@ -18,7 +18,6 @@ public class Floyd
 	{
 		try
 		{
-			Print.printStatement("1******\n");
 			mapping = new int[board.length][board.length];
 			board_copy = new int[board.length][board.length];
 			board_copy = board;
@@ -35,7 +34,6 @@ public class Floyd
 						mapping[i][j]= -1;
 				}
 			}
-			Print.printStatement("1******\n");
 			board_as_graph = new int[vertices][vertices];
 
 			for(int i=0;i<board.length;i++)
@@ -102,7 +100,6 @@ public class Floyd
 					}
 				}
 			}
-			Print.printStatement("1******\n");
 		}
 		catch(Exception e)
 		{
@@ -114,13 +111,11 @@ public class Floyd
 	{
 		getGraph(board);
 		graph = new int[vertices][vertices];
-		Print.printStatement("+++++++++\n");
 		for(int i=0;i<vertices;i++)
 		{
 			for(int j=0;j<vertices;j++)
 				graph[i][j] = board_as_graph[i][j];
 		}
-		Print.printStatement("+++++++++\n");
 		int i, j, k;
 		for (i = 0; i < vertices; ++i) 
 		{
@@ -132,7 +127,6 @@ public class Floyd
 				}
 			}
 		}
-		Print.printStatement("+++++++++\n");
 		next = new int[vertices][vertices];
 		for (i = 0; i < vertices; i++) 
 		{
@@ -141,7 +135,6 @@ public class Floyd
 				next[i][j] = -1;
 			}
 		}
-		Print.printStatement("+++++++++\n");
 		for (k = 0; k < vertices; k++) 
 		{
 			for (i = 0; i < vertices; i++) 
@@ -160,17 +153,8 @@ public class Floyd
 				}
 			}
 		}
-		Print.printStatement("+++++++++\n");
+
 		buildPath();
-		Print.printStatement("+++++++++\n");
-		Print.printStatement("---------------------------------------------\n");
-		for(int d=0;d<vertices;d++)
-		{
-			for(int e=0;e<vertices;e++)
-				Print.printStatement(shortest_path[d][e]+"");
-			Print.printStatement("\n");
-		}
-		Print.printStatement("---------------------------------------------\n");
 
 	}
 
@@ -216,7 +200,6 @@ public class Floyd
 	{
 		int src=mapping[i_src][j_src];
 		int dest = mapping[i_dest][j_dest];
-//		Print.printStatement("SHORTEST "+src+"   "+dest+"\n");
 		return shortest_path[src][dest];
 	}
 
@@ -269,13 +252,11 @@ public class Floyd
 	{
 		//getGraph(board);
 		graph1 = new int[vertices][vertices];
-		Print.printStatement("+++++++++\n");
 		for(int i=0;i<vertices;i++)
 		{
 			for(int j=0;j<vertices;j++)
 				graph1[i][j] = board_as_graph[i][j];
 		}
-		Print.printStatement("+++++++++\n");
 		int i, j, k;
 		for (i = 0; i < vertices; ++i) 
 		{
@@ -287,7 +268,6 @@ public class Floyd
 				}
 			}
 		}
-		Print.printStatement("+++++++++\n");
 		next1 = new int[vertices][vertices];
 		for (i = 0; i < vertices; i++) 
 		{
@@ -296,7 +276,6 @@ public class Floyd
 				next1[i][j] = -1;
 			}
 		}
-		Print.printStatement("+++++++++\n");
 		for (k = 0; k < vertices; k++) 
 		{
 			for (i = 0; i < vertices; i++) 
@@ -315,17 +294,8 @@ public class Floyd
 				}
 			}
 		}
-		Print.printStatement("+++++++++\n");
 		buildPath1(sack);
-		Print.printStatement("+++++++++\n");
-		Print.printStatement("---------------------------------------------\n");
-		for(int d=0;d<vertices;d++)
-		{
-			for(int e=0;e<vertices;e++)
-				Print.printStatement(possible_path[d][e]+"");
-			Print.printStatement("\n");
-		}
-		Print.printStatement("---------------------------------------------\n");
+
 
 	}
 	
@@ -405,7 +375,6 @@ public class Floyd
 	{
 		int src=mapping[i_src][j_src];
 		int dest = mapping[i_dest][j_dest];
-//		Print.printStatement("SHORTEST "+src+"   "+dest+"\n");
 		return possible_path[src][dest];
 	}
 }

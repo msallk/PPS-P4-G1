@@ -1,5 +1,6 @@
 package cell.g3;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -61,7 +62,7 @@ public 	class Mover
 	}
 
 	
-	private int distanceBetween(int[] location, int[] targetLocation)
+	public static int distanceBetween(int[] location, int[] targetLocation, int[][] board)
 	{
 		if(location[0] == targetLocation[0] && location[1] == targetLocation[1])
 		{
@@ -124,25 +125,48 @@ public 	class Mover
 			outerNeighborsMap.clear();
 			//outerNeighborsMap = new HashMap<Integer[], Integer>();
 		}
-		mLogln("problem in distanceBetween():  distance not found");
 		return -1;
 	}
 	
-	int closestOpponent(int[] traderLoc)
+	
+	boolean isCloserOrTiedOpponent(int[] traderLoc)
 	{
-		int minDistance = Integer.MAX_VALUE;
-		for(int[] pl : player.players)
+		int[] distances = new int[player.players.length];
+		for(int i = 0; i < player.players.length; i++)
 		{
-			if(pl != null)
+			if(player.players[i] == null)
 			{
-				int dist = distanceBetween(traderLoc, pl);
-				if(dist < minDistance)
-				{
-					minDistance = dist;
-				}
+				distances[i] = Integer.MAX_VALUE;
+			}
+			else
+			{
+				distances[i] = distanceBetween(traderLoc, player.players[i], board);
 			}
 		}
-		return minDistance;
+		int ourDist = distanceBetween(traderLoc, location, board);
+		int count = 0;
+		for (int i: distances) {
+			if (i <= ourDist)
+				count++;
+		}
+
+		if (count == 1)
+			return false;
+		else
+			return true;
+	}
+	
+	private boolean onSameSpot()
+	{
+		int count = 0;
+		for(int[] pl : player.players)
+		{
+			if(pl != null && pl[0] == location[0] && pl[1] == location[1])
+				count ++;
+			if(count == 2)
+				return true;
+		}
+		return false;
 	}
 	
 	//TODO: Rank the leprechauns based on proximity to other leps or other players around it and color needed.  dont just pick arbitrarily  
@@ -155,7 +179,9 @@ public 	class Mover
 	{
 		mLogln("closest trader");
 		
-		targetLocation = new int[]{player.board.length/2, player.board.length/2};		
+		targetLocation = new int[]{player.board.length/2, player.board.length/2};
+		//targetLocation = new int[]{0, 0};
+		
 		Set<Integer[]> visitedLocations = new HashSet<Integer[]>();
 		visitedLocations.add(MapAnalyzer.wrapIntToIntegerArray(location));
 
@@ -167,8 +193,12 @@ public 	class Mover
 		for(Map.Entry<Integer[], Integer> en : map.entrySet())
 		{
 			visitedLocations.add(en.getKey());
-			if(isTrader(MapAnalyzer.wrapIntegerToIntArray(en.getKey())) && sack[en.getValue()] > 0 && closestOpponent(MapAnalyzer.wrapIntegerToIntArray(en.getKey())) > 1)
+			if(isTrader(MapAnalyzer.wrapIntegerToIntArray(en.getKey())) 
+					&& sack[en.getValue()] > 0 
+					&& !isCloserOrTiedOpponent(MapAnalyzer.wrapIntegerToIntArray(en.getKey())))
 			{
+				mLogln("is closer opp: " + isCloserOrTiedOpponent(MapAnalyzer.wrapIntegerToIntArray(en.getKey())) + " our dist: " + Mover.distanceBetween(player.currentLocation, targetLocation, board) + " rad: " + 1);
+				mLogln("--> IN if radius 1");
 				targetLocation = MapAnalyzer.wrapIntegerToIntArray(en.getKey());
 				return targetLocation;
 			}
@@ -183,7 +213,7 @@ public 	class Mover
 			}*/
 			for(Map.Entry<Integer[], Integer> entry : map.entrySet())
 			{
-				mLogln(entry.getValue() + " radius : " + (i+1));
+				// mLogln(entry.getValue() + " radius : " + (i+1));
 			}
 
 			tempNeighborsMap = new HashMap<Integer[], Integer>();
@@ -200,9 +230,13 @@ public 	class Mover
 					{
 						outerNeighborsMap.put(m.getKey(), m.getValue());
 						visitedLocations.add((Integer[])m.getKey());
-						mLogln(" location: " + m.getKey()[0] + "," + m.getKey()[1] + " : color: " + m.getValue() + " ref:" + m);
-						if(isTrader(MapAnalyzer.wrapIntegerToIntArray(m.getKey())) && sack[m.getValue()] > 0 && closestOpponent(MapAnalyzer.wrapIntegerToIntArray(m.getKey())) > i+2)
+						// mLogln(" location: " + m.getKey()[0] + "," + m.getKey()[1] + " : color: " + m.getValue() + " ref:" + m);
+						if(isTrader(MapAnalyzer.wrapIntegerToIntArray(m.getKey())) 
+								&& sack[m.getValue()] > 0 
+								&& !isCloserOrTiedOpponent(MapAnalyzer.wrapIntegerToIntArray(m.getKey())))
 						{
+							mLogln("is closer opp: " + isCloserOrTiedOpponent(MapAnalyzer.wrapIntegerToIntArray(m.getKey())) + " our dist: " + Mover.distanceBetween(player.currentLocation, targetLocation, board) + " rad: " + (i + 2));
+							mLogln("--> IN if radius > 1");
 							targetLocation = MapAnalyzer.wrapIntegerToIntArray(m.getKey());
 							return targetLocation;
 						}
@@ -231,8 +265,9 @@ public 	class Mover
 			if(Player.color(Player.move(location, dir), board) >= 0 && sack[Player.color(Player.move(location, dir), board)] > 0)
 				return dir;
 		}
-		while(sack[Player.color(Player.move(location, dir), board)] <= 0);
+		while(Player.color(Player.move(location, dir), board) == -1 || sack[Player.color(Player.move(location, dir), board)] <= 0);
 
+		mLogln("*** randomStep returned null ***");
 		return null;
 	}
 

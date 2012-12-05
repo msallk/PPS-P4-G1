@@ -3,8 +3,8 @@ package cell.g4;
 public class DynamicWeightedSack extends WeightedSack {
 	private int longest = -1;
 	
-	public DynamicWeightedSack(int[] sack, Board board) {
-		super(sack, board);	
+	public DynamicWeightedSack(int[] sack, Board board, int nTrader, int nPlayer) {
+		super(sack, board, nTrader, nPlayer);	
 	}
 
 	@Override
@@ -30,8 +30,6 @@ public class DynamicWeightedSack extends WeightedSack {
 		super.update(sack, loc);
 		longest = getLongestDist(loc);
 		reserves = calcWeightedReserve(loc);
-		for (int i = 0; i < 6; i++)
-			System.out.println(reserves[i]);
 	}
 			
 	@Override

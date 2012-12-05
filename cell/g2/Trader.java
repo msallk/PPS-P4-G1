@@ -49,6 +49,62 @@ public class Trader
 		}
 		return min;
 	}
+	
+	/*
+	 * 	int getBestTrader(int location[],Floyd shortest, OtherPlayers opponents,int turns)
+	{
+		int rank[] = new int[no_of_traders];
+		int t[] = new int[no_of_traders];
+		for(int i=0;i<no_of_traders;i++)
+		{
+			Vector<Integer> path = shortest.getShortestPossiblePath(location[0], location[1], coordinates[i][0], coordinates[i][1]);
+			if(path != null)
+				rank[i]=path.size()+1;
+			else
+				rank[i]=50;
+			boolean visited[] =new boolean[no_of_traders];
+			int score =getClusterScore(i,visited,shortest);
+			Print.printStatement("SCORE : "+score);
+			rank[i] = rank[i] - score;
+			t[i] = i;
+		}
+		int min = 0;
+		for(int i=1;i<no_of_traders;i++)
+		{
+			for(int j=i+1;j<no_of_traders;j++)
+			{
+				if(rank[i] > rank[j])
+				{
+					int x = rank[j];
+					rank[j]=rank[i];
+					rank[i]=rank[j];
+					int y = t[j];
+					t[j]=t[i];
+					t[i]=t[j];
+				}
+			}
+		}
+		boolean f =true;
+		if(turns>3)
+		{
+			Print.printStatement("DONE1234567890");
+			for(int i =0;i<no_of_traders;i++)
+			{
+				Print.printStatement("TRADER NUMBER : "+t[i]+"   "+rank[i]);
+				f = opponents.checkPlayerMovement(t[i], shortest, coordinates);
+				//			Print.printStatement("DONE");
+				if(!f)
+				{
+					min = t[i];
+					System.out.println("TRADER : "+min);
+					return min;
+				}
+			}
+		}
+		System.out.println("TRADER : "+t[min]);
+		return t[min];
+	}
+	*/
 
 	int getClusterScore(int i, boolean visited[],Floyd shortest)
 	{
