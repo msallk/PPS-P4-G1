@@ -117,7 +117,7 @@ public class RouteAnalyzer implements Logger{
 		for(int[] p:players){
 			if(p==null)
 				continue;
-			if(g.getDistance(p, trader)<distance)
+			if(g.getDistance(p, trader)<=distance)
 				return false;
 		}
 		return true;
