@@ -191,8 +191,8 @@ public class Player implements cell.sim.Player, Logger {
 				int color = color(new_location, board);
 				if (color >= 0 && sack[color] != 0) {
 					chosen=new Node(new_location[0],new_location[1],color);
-					System.err.println("current location: "+location[0]+", "+location[1]);
-					System.err.println("random move to: "+new_location[0]+", "+new_location[1]);
+					log("current location: "+location[0]+", "+location[1]);
+					log("random move to: "+new_location[0]+", "+new_location[1]);
 					break;
 				}
 			}
@@ -223,7 +223,7 @@ public class Player implements cell.sim.Player, Logger {
 		} else
 		{
 			
-			System.out.println("You CAN'T move that way!!!");
+			log("You CAN'T move that way!!!");
 			Direction tempdir=null;
 			for (;;) {
 				tempdir = randomDirection();
@@ -231,8 +231,8 @@ public class Player implements cell.sim.Player, Logger {
 				int color = color(new_location, board);
 				if (color >= 0 && sack[color] != 0) {
 					chosen=new Node(new_location[0],new_location[1],color);
-					System.err.println("current location: "+location[0]+", "+location[1]);
-					System.err.println("random move to: "+new_location[0]+", "+new_location[1]);
+					log("current location: "+location[0]+", "+location[1]);
+					log("random move to: "+new_location[0]+", "+new_location[1]);
 					break;
 				}
 			}
@@ -375,7 +375,7 @@ public class Player implements cell.sim.Player, Logger {
 		
 		while(rv>gv)
 		{
-			System.err.println("infinite loops");
+			log("bad deal to keep threshold");
 			give[highestIdx]++;
 			savedSack[highestIdx]--;
 			gv+=rate[highestIdx];
