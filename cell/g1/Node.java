@@ -41,6 +41,15 @@ public class Node implements Comparable{
 					
 	}
 	
+	public boolean equals(Object o){
+		Node n=(Node)o;
+		return (n.x==this.x && n.y==this.y && n.color==this.color);
+	}
+	
+	public int hashCode(){
+		return x*100+y*10+color;
+	}
+	
 	public String toString(){
 		return "("+x+", "+y+")";
 	}

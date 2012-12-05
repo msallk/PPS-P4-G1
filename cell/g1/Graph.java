@@ -26,6 +26,10 @@ public class Graph implements Logger{
 				mapNodes[i][j]=new Node(i,j,map[i][j]);
 			}
 	}
+	
+	public Node getNode(int[] location){
+		return mapNodes[location[0]][location[1]];
+	}
 
 	/*
 	 * Method returns the number of each colored tile on
@@ -244,6 +248,7 @@ public class Graph implements Logger{
 		return null;
 	}
 
+	
 	//NOT IN USE
 	private void BFS(int[] current, int[] dest, ArrayList<Path> paths){
 

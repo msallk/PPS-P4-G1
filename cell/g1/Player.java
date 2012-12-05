@@ -2,6 +2,7 @@ package cell.g1;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Random;
 
 
@@ -16,9 +17,11 @@ public class Player implements cell.sim.Player, Logger {
 	private RouteAnalyzer routeAnalyzer=null;
 	private ArrayList<Node> nextSteps= new ArrayList<Node>();
 	ArrayList<Path> paths;
+	private int turns=1;
+	private static int turnsConsole=1;
+	private static int instance=0;
 	private static int count=0;
-	private static int priority=0;
-	private boolean isKing=true;
+	private static HashMap<Node, Integer> currentLocation;
 
 	public void log(String message){
 		if(DEBUG)
@@ -27,19 +30,33 @@ public class Player implements cell.sim.Player, Logger {
 
 	public Player()
 	{
-		count++;
-		if(count==1)
-			isKing=true;
-		else
-			isKing=false;
+		instance++;
 	}
 	public String name() {
 		return "G1";
 	}
+	
+	//Multiple instance will report location to this method every turn.
+	public static int console(Node location, int turn){
+		if(count==0 || turn!=turnsConsole){
+			currentLocation=new HashMap<Node, Integer>();
+			turnsConsole=turn;
+		}
+		count++;
+		if(currentLocation.containsKey(location)){
+			currentLocation.put(location, currentLocation.get(location)+1);
+			return currentLocation.get(location);
+		}
+		else{
+			currentLocation.put(location,1);
+			return 1;
+		}
+	}
 
 	public Direction move(int[][] board, int[] location, int[] sack,
 			int[][] players, int[][] traders)
-	{	
+	{
+		++turns;
 		Direction dir=null;
 		if(iniMarble==0){
 			iniMarble = sack[0];
@@ -64,6 +81,9 @@ public class Player implements cell.sim.Player, Logger {
 		{
 			graph=new Graph(board);
 		}
+		int rank=console(graph.getNode(location),turns);
+		if(rank!=1)
+			log("Self Detected");
 
 		if(routeAnalyzer==null)
 			routeAnalyzer=new RouteAnalyzer(graph);
@@ -74,9 +94,9 @@ public class Player implements cell.sim.Player, Logger {
 		 */
 
 		//int[] closest=graph.nearestTrader(location,traders);
-		int[] closest=routeAnalyzer.getDestination1(location,sack, players, traders);
+		int[] closest=routeAnalyzer.getDestination1(location,sack, players, traders,rank);
 		if(closest==null)
-			closest=routeAnalyzer.getDestination2(location,sack, players, traders);
+			closest=routeAnalyzer.getDestination2(location,sack, players, traders,rank);
 		nextSteps=graph.getNextStep(location, closest);
 		/* USE TO TEST PATHS */
 		paths=graph.getPath(location, closest);
@@ -101,9 +121,11 @@ public class Player implements cell.sim.Player, Logger {
 				int color = color(new_location, board);
 				if (color >= 0 && sack[color] != 0) {
 					chosen=new Node(new_location[0],new_location[1],color);
+					break;
 				}
 			}
 		}
+		
 		log("chosen:"+Arrays.toString(chosen.getLocation()));
 		int di=chosen.getLocation()[0]-location[0];
 		int dj=chosen.getLocation()[1]-location[1];

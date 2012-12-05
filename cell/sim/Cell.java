@@ -12,7 +12,7 @@ public class Cell {
 	private static int traders = 10;
 	private static int marbles = 15;
 	private static boolean recompile = false;
-	private static String mapPath = "rotate.txt";
+	private static String mapPath = "g3-traps.txt";
 	private static String playerPath = "players.list";
 
 	// return game turns
@@ -532,6 +532,7 @@ public class Cell {
 				                      copyI(sacks[p]), copyII(player_location_copy),
 				                      copyII(trader_location_copy));
 			} catch (Exception e) {
+				e.printStackTrace();
 				System.err.println("Player " + (p + 1) + " threw an exception during move: " + e.getMessage());
 			}
 			if (dir == null) {
