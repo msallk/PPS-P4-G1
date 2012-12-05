@@ -4,12 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
-import cell.sim.Player.Direction;
-
 
 public class Player implements cell.sim.Player, Logger {
 
-	boolean DEBUG= false;
+	boolean DEBUG= true;
 	private int thresHold = 0;
 	private int iniMarble = 0;
 	private Random gen = new Random();
@@ -17,7 +15,9 @@ public class Player implements cell.sim.Player, Logger {
 	private Graph graph=null;
 	private RouteAnalyzer routeAnalyzer=null;
 	private ArrayList<Node> nextSteps= new ArrayList<Node>();
+	ArrayList<Path> paths;
 	private static int count=0;
+	private static int priority=0;
 	private boolean isKing=true;
 
 	public void log(String message){
@@ -40,102 +40,100 @@ public class Player implements cell.sim.Player, Logger {
 	public Direction move(int[][] board, int[] location, int[] sack,
 			int[][] players, int[][] traders)
 	{	
-		if(isKing){
-			Direction dir=null;
-			if(iniMarble==0){
-				iniMarble = sack[0];
-			}
+		Direction dir=null;
+		if(iniMarble==0){
+			iniMarble = sack[0];
+		}
 
-			int l = board.length;
-			int n1 = (3*l*l+1)/4;
-			int p = 0;
-			for(int i=0; i<players.length; i++){
-				if(players[i]==null)
-					continue;
-				p++;
-			}
-			int t = traders.length;
-			//thresHold= (int)(l/3*Math.sqrt(p/t));
-			thresHold = (int)(Math.sqrt(n1*p/t)*1.414/2) + 1;
-			if(thresHold >= iniMarble - 5)
-				thresHold = iniMarble - 4;
+		int l = board.length;
+		int n1 = (3*l*l+1)/4;
+		int p = 0;
+		for(int i=0; i<players.length; i++){
+			if(players[i]==null)
+				continue;
+			p++;
+		}
+		int t = traders.length;
+		//thresHold= (int)(l/3*Math.sqrt(p/t));
+		thresHold = (int)(Math.sqrt(n1*p/t)*1.414/2) + 1;
+		if(thresHold >= iniMarble - 5)
+			thresHold = iniMarble - 4;
 
-			savedSack=sack;
-			if(graph==null)
-			{
-				graph=new Graph(board);
-			}
+		savedSack=sack;
+		if(graph==null)
+		{
+			graph=new Graph(board);
+		}
 
-			if(routeAnalyzer==null)
-				routeAnalyzer=new RouteAnalyzer(graph);
-			/*	for (int i=0; i<traders.length; i++ )
+		if(routeAnalyzer==null)
+			routeAnalyzer=new RouteAnalyzer(graph);
+		/*	for (int i=0; i<traders.length; i++ )
 		{
 			nextPerTrader.add(graph.getNextStep(location, traders[i]));
 		}
-			 */
+		 */
 
-			//int[] closest=graph.nearestTrader(location,traders);
-			int[] closest=routeAnalyzer.getDestination1(location,sack, players, traders);
-			if(closest==null)
-				closest=routeAnalyzer.getDestination2(location,sack, players, traders);
-			nextSteps=graph.getNextStep(location, closest);
-			//ArrayList<Path> paths=graph.getPath(location, closest);
-			//log(paths.toString());
-			Node chosen=null;
-			int max=0;
-			for (Node n: nextSteps)
+		//int[] closest=graph.nearestTrader(location,traders);
+		int[] closest=routeAnalyzer.getDestination1(location,sack, players, traders);
+		if(closest==null)
+			closest=routeAnalyzer.getDestination2(location,sack, players, traders);
+		nextSteps=graph.getNextStep(location, closest);
+		/* USE TO TEST PATHS */
+		paths=graph.getPath(location, closest);
+		if(paths.size()>1)
+			log(paths.toString());
+		
+		Node chosen=null;
+		int max=0;
+		for (Node n: nextSteps)
+		{
+			int color=n.getColor();
+			if(max<sack[color])
 			{
-				int color=n.getColor();
-				if(max<sack[color])
-				{
-					max=sack[color];
-					chosen=n;
-				}
+				max=sack[color];
+				chosen=n;
 			}
-			if(chosen==null){
-				for (;;) {
-					Direction tempdir = randomDirection();
-					int[] new_location = move(location, dir);
-					int color = color(new_location, board);
-					if (color >= 0 && sack[color] != 0) {
-						chosen=new Node(new_location[0],new_location[1],color);
-					}
-				}
-			}
-			log("chosen:"+Arrays.toString(chosen.getLocation()));
-			int di=chosen.getLocation()[0]-location[0];
-			int dj=chosen.getLocation()[1]-location[1];
-			log(di+".."+dj);
-			if(di==0 && dj==-1)
-			{
-				dir=Player.Direction.W;
-			} else if(di==0 && dj==1)
-			{
-				dir=Player.Direction.E;
-			} else if(di==-1 && dj==-1)
-			{
-				dir=Player.Direction.NW;
-			} else if(di==-1 && dj==0)
-			{
-				dir=Player.Direction.N;
-			} else if(di==1 && dj==0)
-			{
-				dir=Player.Direction.S;
-			} else if(di==1 && dj==1)
-			{
-				dir=Player.Direction.SE;
-			} else
-			{
-				System.out.println("You CAN'T move that way!!!");
-			}
-
-			if(chosen!=null) 
-				savedSack[chosen.color]--;
-			return dir;	
 		}
-		else
-			return moveRandom(board, location, sack,
-					players, traders);
+		if(chosen==null){
+			for (;;) {
+				Direction tempdir = randomDirection();
+				int[] new_location = move(location, tempdir);
+				int color = color(new_location, board);
+				if (color >= 0 && sack[color] != 0) {
+					chosen=new Node(new_location[0],new_location[1],color);
+				}
+			}
+		}
+		log("chosen:"+Arrays.toString(chosen.getLocation()));
+		int di=chosen.getLocation()[0]-location[0];
+		int dj=chosen.getLocation()[1]-location[1];
+		log(di+".."+dj);
+		if(di==0 && dj==-1)
+		{
+			dir=Player.Direction.W;
+		} else if(di==0 && dj==1)
+		{
+			dir=Player.Direction.E;
+		} else if(di==-1 && dj==-1)
+		{
+			dir=Player.Direction.NW;
+		} else if(di==-1 && dj==0)
+		{
+			dir=Player.Direction.N;
+		} else if(di==1 && dj==0)
+		{
+			dir=Player.Direction.S;
+		} else if(di==1 && dj==1)
+		{
+			dir=Player.Direction.SE;
+		} else
+		{
+			System.out.println("You CAN'T move that way!!!");
+		}
+
+		if(chosen!=null) 
+			savedSack[chosen.color]--;
+		return dir;	
 	}
 
 	public void trade(double[] rate, int[] request, int[] give)
@@ -267,54 +265,54 @@ public class Player implements cell.sim.Player, Logger {
 		return b;
 	}
 
-			private Direction randomDirection()
-			{
-				switch(gen.nextInt(6)) {
-				case 0: return Direction.E;
-				case 1: return Direction.W;
-				case 2: return Direction.SE;
-				case 3: return Direction.S;
-				case 4: return Direction.N;
-				case 5: return Direction.NW;
-				default: return null;
-				}
-			}
+	private Direction randomDirection()
+	{
+		switch(gen.nextInt(6)) {
+		case 0: return Direction.E;
+		case 1: return Direction.W;
+		case 2: return Direction.SE;
+		case 3: return Direction.S;
+		case 4: return Direction.N;
+		case 5: return Direction.NW;
+		default: return null;
+		}
+	}
 
-			private static int[] move(int[] location, Player.Direction dir)
-			{
-				int di, dj;
-				int i = location[0];
-				int j = location[1];
-				if (dir == Player.Direction.W) {
-					di = 0;
-					dj = -1;
-				} else if (dir == Player.Direction.E) {
-					di = 0;
-					dj = 1;
-				} else if (dir == Player.Direction.NW) {
-					di = -1;
-					dj = -1;
-				} else if (dir == Player.Direction.N) {
-					di = -1;
-					dj = 0;
-				} else if (dir == Player.Direction.S) {
-					di = 1;
-					dj = 0;
-				} else if (dir == Player.Direction.SE) {
-					di = 1;
-					dj = 1;
-				} else return null;
-				int[] new_location = {i + di, j + dj};
-				return new_location;
-			}
+	private static int[] move(int[] location, Player.Direction dir)
+	{
+		int di, dj;
+		int i = location[0];
+		int j = location[1];
+		if (dir == Player.Direction.W) {
+			di = 0;
+			dj = -1;
+		} else if (dir == Player.Direction.E) {
+			di = 0;
+			dj = 1;
+		} else if (dir == Player.Direction.NW) {
+			di = -1;
+			dj = -1;
+		} else if (dir == Player.Direction.N) {
+			di = -1;
+			dj = 0;
+		} else if (dir == Player.Direction.S) {
+			di = 1;
+			dj = 0;
+		} else if (dir == Player.Direction.SE) {
+			di = 1;
+			dj = 1;
+		} else return null;
+		int[] new_location = {i + di, j + dj};
+		return new_location;
+	}
 
-			private static int color(int[] location, int[][] board)
-			{
-				int i = location[0];
-				int j = location[1];
-				int dim2_1 = board.length;
-				if (i < 0 || i >= dim2_1 || j < 0 || j >= dim2_1)
-					return -1;
-				return board[i][j];
-			}
+	private static int color(int[] location, int[][] board)
+	{
+		int i = location[0];
+		int j = location[1];
+		int dim2_1 = board.length;
+		if (i < 0 || i >= dim2_1 || j < 0 || j >= dim2_1)
+			return -1;
+		return board[i][j];
+	}
 }

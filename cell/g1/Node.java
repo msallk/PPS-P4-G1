@@ -42,6 +42,6 @@ public class Node implements Comparable{
 	}
 	
 	public String toString(){
-		return "[["+x+", "+y+"]]";
+		return "("+x+", "+y+")";
 	}
 }
