@@ -55,7 +55,7 @@ public class Player implements cell.sim.Player, Logger {
 		}
 		int t = traders.length;
 		//thresHold= (int)(l/3*Math.sqrt(p/t));
-		thresHold = (int)(Math.sqrt(n1*p/t)*1.414/2) + 1;
+		thresHold = (int)(Math.sqrt(n1*p/t)*1.414/2);
 		if(thresHold >= iniMarble - 5)
 			thresHold = iniMarble - 4;
 
