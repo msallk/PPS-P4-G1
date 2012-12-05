@@ -5,23 +5,30 @@ import java.util.Arrays;
 public class Sack {
 	protected int[] sacks;
 	protected int[] reserves;
+	protected int nTrader;
+	protected int nPlayer;
 	protected Board board;
-	
-	protected final static int MinReserve = 3;
-	protected final static double MinRatio = 0.2;
 	
 	public static int InitialMarble = 0;
 	public static int WinningStock = 0;
 	
-	public Sack(int[] sack,Board board) {
+	public Sack(int[] sack, Board board, int nTrader, int nPlayer) {
 		InitialMarble = sack[0];
 		WinningStock = sack[0] * 4;
 		this.sacks = Arrays.copyOf(sack, sack.length);
 		this.board = board;
 		
+		double[] dist = board.getColorDistribution();
+		
 		reserves = new int[6];
 		for (int i = 0; i < 6; i++)
-			reserves[i] = MinReserve;
+			reserves[i] = (int) (dist[i] * board.dimension() / nTrader * Math.max(nPlayer, 16));
+		
+		this.nTrader = nTrader;
+	}
+	
+	public void setReserves(int[] reserves) {
+		this.reserves = reserves;
 	}
 	
 	public void update(int[] sack, int[] loc) {

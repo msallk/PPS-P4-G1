@@ -183,4 +183,41 @@ public class Board {
 	public int[][] getBoard(){
 		return board;
 	}
+
+	
+	public int[] getCostOfFirstPath(int[] src, int[] dest) {
+		int[] cost = new int[6];
+		
+		int[] curloc = new int[2];
+		curloc[0] = src[0];
+		curloc[1] = src[1];
+		
+		while (curloc[0] != dest[0] || curloc[1] != dest[1]) {
+			List<Direction> dirs = nextMove(curloc, dest);
+			
+			// TODO: consider more options
+			Direction dir = dirs.get(0);
+			curloc = nextLoc(curloc, dir);
+			cost[getColor(curloc)]++;
+		}
+		
+		return cost;
+	}
+	
+	public Path getFirstPath(int[] src, int[] dest) {
+		Path path = new Path();
+		
+		int[] curloc = new int[2];
+		curloc[0] = src[0];
+		curloc[1] = src[1];
+		
+		while (curloc[0] != dest[0] || curloc[1] != dest[1]) {
+			List<Direction> dirs = nextMove(curloc, dest);
+			Direction dir = dirs.get(0);
+			curloc = nextLoc(curloc, dir);
+			path.addNext(dir);
+		}
+		
+		return path;
+	}
 }

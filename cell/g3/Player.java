@@ -1,10 +1,11 @@
 package cell.g3;
 
+import java.util.Arrays;
 import java.util.Random;
 
 public class Player implements cell.sim.Player {
 
-	public static boolean DEBUG = true;
+	public static boolean DEBUG = false;
 	public static boolean PLAYER_DEBUG = false;
 	public Random gen = new Random();
 	public int[] savedSack;
@@ -71,11 +72,10 @@ public class Player implements cell.sim.Player {
 		Trader trader = new Trader(this);
 		
 		MapAnalyzer ma = new MapAnalyzer(board, nextLocation, this);
-		minNextThreshold = ma.getMinRequired();
+		minNextThreshold = copyI(ma.getMinRequired());
 		///
 		pLogln("current: " + currentLocation + ". next: " + nextLocation);
-		for(int i : minNextThreshold)
-			pLogln("min threshhold for" + name() + " " + i);
+		pLogln("min threshholds for " + name() + " " + Arrays.toString(minNextThreshold));
 		///
 		
 		
@@ -185,18 +185,18 @@ public class Player implements cell.sim.Player {
 
 	public int[] copyI(int[] a)
 	{
+		if (a == null) return null;
 		int[] b = new int [a.length];
 		for (int i = 0 ; i != a.length ; ++i)
 			b[i] = a[i];
 		return b;
 	}
-	
+
 	public int[][] copyII(int[][] a)
 	{
-		int[][] b = new int [a.length][a[0].length];
+		int[][] b = new int [a.length][];
 		for (int i = 0 ; i != a.length ; ++i)
-			for(int j = 0; j != a[i].length; ++j)
-				b[i][j] = a[i][j];
+			b[i] = copyI(a[i]);
 		return b;
 	}
 

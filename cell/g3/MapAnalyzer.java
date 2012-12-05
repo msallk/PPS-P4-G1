@@ -20,7 +20,7 @@ public class MapAnalyzer
 	Player player;
 	Map<Map<Integer[], Integer>, Integer> history;
 	Map<Integer[], Integer> radMap;
-	
+
 	MapAnalyzer(int[][] board, int[] currentLocation, Player p)
 	{
 		this.player = p;
@@ -28,17 +28,49 @@ public class MapAnalyzer
 		this.currentLocation = currentLocation;
 		minRequired = new int[6];
 		visitedLocations = new HashSet<Integer[]>();
-		visitedLocations.add(wrapIntToIntegerArray(currentLocation));
+		//visitedLocations.add(wrapIntToIntegerArray(currentLocation));
 		radius = calculateRadius();
 		history = new HashMap<Map<Integer[], Integer>, Integer>();
 		//below line is needed for computing history:
-		radMap = neighborsAtDistance(currentLocation, radius); // = "history.getKey(radius);"
-		computeMinThreshold(currentLocation, radius);
+		//radMap = neighborsAtDistance(currentLocation, radius); // = "history.getKey(radius);"
+		computeThresholds(currentLocation);
 	}
 
+	/**
+	 * To decide whether to keep marbles at a radius or just the direct path:
+	 * if next trader is closer than this 'radius' -> marbles needed for direct path
+	 * if next trader is further or equidistant -> radius = distance
+	 * @return
+	 */
 	private int calculateRadius() {
-		// TODO Auto-generated method stub
-		return 6;
+		if(player.players.length == 1 || player.traders.length == 1)
+		{
+			return board.length+1;
+		}
+		
+		int tiles = 0;
+		for (int i = 0; i < board.length; i++) {
+			for (int j = 0; j < board.length; j++) {
+				if (board[i][j] != -1)
+					tiles++;
+			}
+		}
+		int players = 0;
+		for(int[] i : player.players)
+		{
+			if(i != null)
+				players++;
+		}
+		double density = (players + player.traders.length)/tiles;
+
+		if (density > 0.5)
+			return 2;
+		else if (density > 0.25)
+			return 3;
+		else if (density > 0.025)
+			return 4;
+		else
+			return 5;
 	}
 
 	Map<Integer[], Integer> neighbors(int[] location)
@@ -108,14 +140,14 @@ public class MapAnalyzer
 		history.put(map, 1);
 		for(Integer[] e : map.keySet())
 		{
-			maLogln(">>  "+e[0] + " " + e[1]);
+			//maLogln(">>  "+e[0] + " " + e[1]);
 		}
 
 		for(int i = 0; i < radius-1; i++)
 		{
 			for(Map.Entry<Integer[], Integer> entry : map.entrySet())
 			{
-				maLogln(entry.getValue() + " radius : " + (i+1));
+				// maLogln(entry.getValue() + " radius : " + (i+1));
 			}
 			tempNeighborsMap = new HashMap<Integer[], Integer>();
 			outerNeighborsMap = new HashMap<Integer[], Integer>();
@@ -131,13 +163,13 @@ public class MapAnalyzer
 					{
 						outerNeighborsMap.put(m.getKey(), m.getValue());
 						visitedLocations.add((Integer[])m.getKey());
-						maLogln("location: " + m.getKey()[1] + "," + m.getKey()[0] + " : color: " + m.getValue() + " ref:" + m);
+						// maLogln("location: " + m.getKey()[1] + "," + m.getKey()[0] + " : color: " + m.getValue() + " ref:" + m);
 					}
-//					else
-//					{
-//						int xx = 8; //for debugger/breakpoints
-//						xx = 7;
-//					}
+					//					else
+					//					{
+					//						int xx = 8; //for debugger/breakpoints
+					//						xx = 7;
+					//					}
 				}
 			}
 
@@ -149,7 +181,7 @@ public class MapAnalyzer
 			//outerNeighborsMap = new HashMap<Integer[], Integer>();
 			for(Integer[] e : map.keySet())
 			{
-				maLogln(">>  "+e[0] + " " + e[1]);
+				//maLogln(">>  "+e[0] + " " + e[1]);
 			}
 			history.put(map, i+1);
 		}
@@ -157,9 +189,88 @@ public class MapAnalyzer
 		return map;
 	}
 
-	void computeMinThreshold(int[] currentLocation, int radius)
+
+
+	/**
+	 * 3 cases:
+	 * 1) next trader is closer than 'radius' -> marbles needed for direct path
+	 * 2) next trader is further or equidistant -> radius = distance
+	 * 3) if no next trader (go to center) -> radius = max diameter of board (board.length)
+	 * @param currentLocation
+	 * @param radius
+	 */
+	void computeThresholds(int[] currentLocation)
 	{
 		
+		int[] nextTrader = closestTrader();
+		maLogln("us: " + Arrays.toString(currentLocation));
+		maLogln("next trader: " + Arrays.toString(nextTrader));
+		if(nextTrader == null)
+		{
+			maLogln("case 1: no next trader");
+			radMap = neighborsAtDistance(currentLocation, board.length);
+			computeMinThreshold(currentLocation, board.length);
+		}
+		else if(Mover.distanceBetween(currentLocation, nextTrader, board) >= calculateRadius())
+		{
+			maLogln("case 2: next trader is further than (or equal) " + calculateRadius());
+			radMap = neighborsAtDistance(currentLocation, Mover.distanceBetween(currentLocation, nextTrader, board));
+			computeMinThreshold(currentLocation, Mover.distanceBetween(currentLocation, nextTrader, board));
+		}
+		else
+		{
+			maLogln("case 3: next trader is closer than  " + calculateRadius());
+			//radMap = neighborsAtDistance(currentLocation, Mover.distanceBetween(currentLocation, nextTrader, board));
+			if(straightPath(wrapIntToIntegerArray(nextTrader)))
+			{
+				maLogln("case 3 - straight path");
+				maLogln("min required at beginning of case3 straight path: " + Arrays.toString(minRequired));
+				Map<Integer[], Integer> tempMap = new HashMap<Integer[], Integer>();
+				tempMap.put(wrapIntToIntegerArray(nextTrader), Player.color(nextTrader, board));
+				for(Map.Entry<Integer[], Integer> singleEntry : tempMap.entrySet())
+				{
+					maLogln("single entry: " + Arrays.toString(singleEntry.getKey()));
+					int[] count = player.copyI(countSameColorStraightPath(singleEntry));
+					//maLogln(Arrays.toString(count));
+					for(int i = 0; i < 6; i++)  // number of colors = 6
+					{	
+						//maLogln("Outside:  i: " + i + " singleEntry.getValue(): " + singleEntry.getValue());
+						//maLogln("min required: " + Arrays.toString(minRequired));
+						if(count[i] > minRequired[i])
+						{
+							//maLogln("Inside:  i: " + i + " singleEntry.getValue(): " + singleEntry.getValue());
+							minRequired[i] = count[i];
+						}
+					}
+				}
+			}
+			else
+			{
+				maLogln("case 3 - crooked path");
+				Map<Integer[], Integer> tempMap = new HashMap<Integer[], Integer>();
+				tempMap.put(wrapIntToIntegerArray(nextTrader), Player.color(nextTrader, board));
+				for(Map.Entry<Integer[], Integer> singleEntry : tempMap.entrySet())
+				{
+					List<List<Integer[]>> levels = getLevels(wrapIntegerToIntArray(singleEntry.getKey()));
+					for(int i = 0; i < 6; i++)
+					{
+						int color = i;
+						maLogln("color " + color);
+						int count = countSameColorMultiPath(levels, color);
+						if(count > minRequired[color])
+						{
+							minRequired[color] = count;
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+
+	void computeMinThreshold(int[] currentLocation, int radius)
+	{
 
 		//straight paths
 		//for(Map.Entry<Integer[], Integer> entry : map.entrySet())
@@ -188,21 +299,21 @@ public class MapAnalyzer
 		int radDEBUG = 1;
 		for(Map<Integer[], Integer> hist : history.keySet())
 		{
-			maLogln("rad " + radDEBUG++);
+			//maLogln("rad " + radDEBUG++);
 			for(Map.Entry<Integer[], Integer> entry : hist.entrySet())
 			{
 				if(!straightPath((Integer[])entry.getKey()))
 				{
-					maLogln(">not straight>  " + entry.getKey()[0] + " " + entry.getKey()[1]);
+					//maLogln(">not straight>  " + entry.getKey()[0] + " " + entry.getKey()[1]);
 					//visitedLocations.add((Integer[])entry.getKey());
 					List<List<Integer[]>> levels = getLevels(wrapIntegerToIntArray(entry.getKey()));
 					for(List<Integer[]> outer : levels)
 					{
 						for(Integer[] inner : outer)
 						{
-							maLog(inner[0] + " " + inner[1] + " | ");
+							//maLog(inner[0] + " " + inner[1] + " | ");
 						}
-						maLogln("");
+						//maLogln("");
 					}
 					int count = countSameColorMultiPath(levels, Player.color(wrapIntegerToIntArray(entry.getKey()), board));
 					if(count > minRequired[(Integer)entry.getValue()])
@@ -210,12 +321,24 @@ public class MapAnalyzer
 						minRequired[(Integer)entry.getValue()] = count;
 					}
 				}
-//				else
-//					maLogln("Problems in computeMinThreshold()");
+				//				else
+				//					maLogln("Problems in computeMinThreshold()");
 			}
 		}
 	}
 
+	/**
+	 * For each entire level that is the same color as the target color, we add 1 to the threshold for that color marble
+	 * Example of a level from a to z would be a row:
+	 *    a
+	 *   [][]
+	 *  [][][]
+	 *   [][]
+	 *    z
+	 * @param levels
+	 * @param color Target color
+	 * @return
+	 */
 	int countSameColorMultiPath(List<List<Integer[]>> levels, int color)
 	{
 		int count = 1;
@@ -462,6 +585,7 @@ public class MapAnalyzer
 
 	int[] countSameColorStraightPath(Map.Entry<Integer[], Integer> entry)
 	{
+		maLogln("countSameColorStraightPath currentLoc " + Arrays.toString(currentLocation) + " argument " + Arrays.toString(entry.getKey()));
 		int[] count = new int[6];
 		int dy = entry.getKey()[0] - currentLocation[0]; //we've switched dx,dy
 		int dx = entry.getKey()[1] - currentLocation[1];
@@ -532,6 +656,7 @@ public class MapAnalyzer
 		}
 		else
 			maLogln("Problems in countSameColorStraighPath()");
+		maLogln("COUNT: " + Arrays.toString(count));
 		return count;
 	}
 
@@ -543,7 +668,7 @@ public class MapAnalyzer
 			return true;
 		return false;
 	}
-	
+
 	public void maLog(Object o)
 	{
 		if(MAPANALYZER_DEBUG && Player.DEBUG)
@@ -558,6 +683,121 @@ public class MapAnalyzer
 			System.out.println("maLogDEBUG<" + player.name() + "> " + o);
 		}
 	}
+
+	private int[] closestTrader()
+	{
+		int[] targetLocation = null; //new int[]{player.board.length/2, player.board.length/2};
+		Set<Integer[]> visitedLocations = new HashSet<Integer[]>();
+		visitedLocations.add(MapAnalyzer.wrapIntToIntegerArray(currentLocation));
+
+		Map<Integer[], Integer> tempNeighborsMap;
+		Map<Integer[], Integer> outerNeighborsMap = new HashMap<Integer[], Integer>();
+
+		///first layer of neighbors
+		Map<Integer[], Integer> map = MapAnalyzer.neighbors(currentLocation, board);
+		for(Map.Entry<Integer[], Integer> en : map.entrySet())
+		{
+			visitedLocations.add(en.getKey());
+			targetLocation = MapAnalyzer.wrapIntegerToIntArray(en.getKey());
+			if(isTrader(targetLocation) //&& player.savedSack[en.getValue()] > 0 
+					&& !isCloserOrTiedOpponent(targetLocation) 
+					&& (currentLocation[0] != targetLocation[0] || currentLocation[1] != targetLocation[1]))
+			{
+				maLogln("is closer opp: " + isCloserOrTiedOpponent(targetLocation) + " our dist: " + Mover.distanceBetween(currentLocation, targetLocation, board) + " rad: " + 1);
+				maLogln("target locations: " + Arrays.toString(targetLocation) + " prev locations: " + Arrays.toString(currentLocation) + " distance " + 1);
+				return targetLocation;
+			}
+		}
+
+		//additional layers of neighbors
+		for(int i = 0; i <= player.board.length; i++)
+		{
+			tempNeighborsMap = new HashMap<Integer[], Integer>();
+			outerNeighborsMap = new HashMap<Integer[], Integer>();
+
+			for(Map.Entry<Integer[], Integer> entry : map.entrySet())
+			{
+				tempNeighborsMap.clear();
+				//tempNeighborsMap = new HashMap<Integer[], Integer>();
+				tempNeighborsMap.putAll(MapAnalyzer.neighbors(MapAnalyzer.wrapIntegerToIntArray((Integer[])entry.getKey()), board));
+				for(Map.Entry<Integer[], Integer> m : tempNeighborsMap.entrySet())
+				{
+					if(!Wrap.contains(visitedLocations, m.getKey()) && !Wrap.contains(outerNeighborsMap, m.getKey()))
+					{
+						outerNeighborsMap.put(m.getKey(), m.getValue());
+						visitedLocations.add((Integer[])m.getKey());
+						targetLocation = MapAnalyzer.wrapIntegerToIntArray(m.getKey());
+						if(isTrader(targetLocation) //&& player.savedSack[m.getValue()] > 0 
+								&& !isCloserOrTiedOpponent(targetLocation)
+								&& (currentLocation[0] != targetLocation[0] || currentLocation[1] != targetLocation[1]))
+						{
+							maLogln("is closer opp: " + isCloserOrTiedOpponent(targetLocation) + " our dist: " + Mover.distanceBetween(currentLocation, targetLocation, board) + " i+2: " + (i+2));
+							maLogln("target locations: " + Arrays.toString(targetLocation) + " prev locations: " + Arrays.toString(currentLocation) + " distance " + (i+2));
+							return targetLocation;
+						}
+					}
+				}
+			}
+
+			map.clear();  //maybe make new map instead as in MapAnalyzer
+			//map = new HashMap<Integer[], Integer>();
+			map.putAll(outerNeighborsMap);
+			outerNeighborsMap.clear();
+			//outerNeighborsMap = new HashMap<Integer[], Integer>();
+		}
+
+		return null;
+	}
+
+	private boolean isTrader(int[] location)
+	{
+		for(int i = 0; i < player.traders.length; i ++)
+			if(location[0] == player.traders[i][0] && location[1] == player.traders[i][1])
+				return true;
+		return false;
+	}
+
+	boolean isCloserOrTiedOpponent(int[] traderLoc)
+	{
+		int[] distances = new int[player.players.length];
+		for(int i = 0; i < player.players.length; i++)
+		{
+			if(player.players[i] == null)
+			{
+				distances[i] = Integer.MAX_VALUE;
+			}
+			else
+			{
+				distances[i] = Mover.distanceBetween(traderLoc, player.players[i], board);
+			}
+		}
+		int ourDist = Mover.distanceBetween(traderLoc, currentLocation, board);
+		int count = 0;
+		for (int i: distances) {
+			if (i <= ourDist)
+				count++;
+		}
+
+		if (count == 1)
+			return false;
+		else
+			return true;
+	}
+
+	private boolean onSameSpot()
+	{
+		int count = 0;
+		for(int[] pl : player.players)
+		{
+			if(pl != null && pl[0] == currentLocation[0] && pl[1] == currentLocation[1])
+				count ++;
+			if(count == 2)
+				return true;
+		}
+		return false;
+	}
+
+
 } // end MapAnalyzer class
 
 class Wrap
@@ -608,160 +848,3 @@ class Wrap
 		return true;
 	}
 }
-
-
-
-
-
-
-
-//	int countSameColorMultiPath2(Map.Entry<Integer[], Integer> entry)
-//	{
-//		int radius = 2;
-//		int count = 1;
-//		int dx = entry.getKey()[0] - currentLocation[0];
-//		int dy = entry.getKey()[1] - currentLocation[1];
-//		int color = entry.getValue();
-//		
-//		if(dx < 0 && dy < 0 && dy < dx) //case 1
-//		{
-//			int colorW = Player.color(new int[]{currentLocation[0]-1, currentLocation[1]}, board);
-//			int colorNW = Player.color(new int[]{currentLocation[0]-1, currentLocation[1]-1}, board);
-//			if(colorW == color && colorNW == color) //both (next steps on) shortest paths are same color as cell 2 spots away
-//			{
-//				if(count < radius)  /* unnecessary check */
-//					count++;
-//			}
-//		}
-//		else if(dx < 0 && dy < 0 && dx < dy) //case 2
-//		{
-//			int colorN = Player.color(new int[]{currentLocation[0], currentLocation[1]-1}, board);
-//			int colorNW = Player.color(new int[]{currentLocation[0]-1, currentLocation[1]-1}, board);
-//			if(colorN == color && colorNW == color) //both next steps on shortest path are same color as cell 2 spots away
-//			{
-//				if(count < radius)
-//					count++;
-//			}
-//		}
-//		else if(dx > 0 && dy > 0 && dy > dx) //case 4 
-//		{
-//			int colorE = Player.color(new int[]{currentLocation[0]+1, currentLocation[1]}, board);
-//			int colorSE = Player.color(new int[]{currentLocation[0]+1, currentLocation[1]+1}, board);
-//			if(colorE == color && colorSE == color) //both next steps on shortest path are same color as cell 2 spots away
-//			{
-//				if(count < radius)
-//					count++;
-//			}
-//		}
-//		else if(dx > 0 && dy > 0 && dy < dx) //case 5
-//		{
-//			int colorS = Player.color(new int[]{currentLocation[0], currentLocation[1]+1}, board);
-//			int colorSE = Player.color(new int[]{currentLocation[0]+1, currentLocation[1]+1}, board);
-//			if(colorS == color && colorSE == color) //both next steps on shortest path are same color as cell 2 spots away
-//			{
-//				if(count < radius)
-//					count++;
-//			}
-//		}
-//		else if(dx < 0 && dy > 0) //case 3
-//		{
-//			int colorE = Player.color(new int[]{currentLocation[0]+1, currentLocation[1]}, board);
-//			int colorN = Player.color(new int[]{currentLocation[0], currentLocation[1]-1}, board);
-//			if(colorE == color && colorN == color) //both next steps on shortest path are same color as cell 2 spots away
-//			{
-//				if(count < radius)
-//					count++;
-//			}
-//		}
-//		else if(dx > 0 && dy < 0) //case 6
-//		{
-//			int colorW = Player.color(new int[]{currentLocation[0]-1, currentLocation[1]}, board);
-//			int colorS = Player.color(new int[]{currentLocation[0], currentLocation[1]+1}, board);
-//			if(colorW == color && colorS == color) //both next steps on shortest path are same color as cell 2 spots away
-//			{
-//				if(count < radius)
-//					count++;
-//			}
-//		}
-//		else
-//			System.err.println("DEBUG Problems in countSameColorMultiPath2()");
-//		return count;
-//	}
-
-
-
-
-
-
-
-
-//Map<Integer[], Integer> expandRadius(Map<Integer[], Integer> map)
-//	{
-/*Map<Integer[], Integer> tempNeighborsMap = new HashMap<Integer[], Integer>();
-	Map<Integer[], Integer> outerNeighborsMap = new HashMap<Integer[], Integer>();
-	for(Map.Entry<Integer[], Integer> entry : map.entrySet())
-	{
-		tempNeighborsMap = neighbors(wrapIntegerToIntArray((Integer[])entry.getKey()));
-
-		for(Map.Entry<Integer[], Integer> m : tempNeighborsMap.entrySet())
-		{
-			if(!visitedLocations.contains(m) && !outerNeighborsMap.containsKey(m.getKey()))
-			{
-				outerNeighborsMap.put(m.getKey(), m.getValue());
-			}
-		}
-	}	*/
-//check for straight paths
-/*for(Map.Entry<Integer[], Integer> entry : outerNeighborsMap.entrySet())
-	{		
-			if(straightPath((Integer[])entry.getKey()))
-			{
-				visitedLocations.add((Integer[])entry.getKey());
-				int count = countSameColorStraightPath(entry);
-				if(count > minRequired[(Integer)entry.getValue()])
-				{
-					minRequired[(Integer)entry.getValue()] = count;
-				}
-			}
-			else
-				continue;
-	}
-
-//	TODO Done with straight paths... add code for outer neighbors that have more than 1 shortest paths to dem thru currentLocation.  MAX.
-	for(Map.Entry<Integer[], Integer> entry : outerNeighborsMap.entrySet())
-	{
-		if(!visitedLocations.contains(entry.getKey()))
-		{
-			visitedLocations.add((Integer[])entry.getKey());
-			int count = countSameColorMultiPath2(entry);
-			if(count > minRequired[(Integer)entry.getValue()])
-			{
-				minRequired[(Integer)entry.getValue()] = count;
-			}
-		}
-		else
-			continue;
-	}*/
-
-
-//		return map;
-//	}
-//////////////////
-
-
-
-
-
-////////////////
-//	Map<Integer[], Integer> initialize(int[] location)
-//	{
-//		Map<Integer[], Integer> map = neighbors(location);
-//		for(Map.Entry entry : map.entrySet())
-//		{
-//			minRequired[(Integer)entry.getValue()] = 1;
-//			visitedLocations.add((Integer[])entry.getKey());
-//		}
-//		return map;
-//	}
-
-/////

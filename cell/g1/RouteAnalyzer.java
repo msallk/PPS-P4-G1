@@ -114,11 +114,15 @@ public class RouteAnalyzer implements Logger{
 	}
 
 	private boolean checkOthers1(int[] trader, int[][] players, int distance) {
+		int count=0;
 		for(int[] p:players){
 			if(p==null)
 				continue;
-			if(g.getDistance(p, trader)<=distance)
-				return false;
+			if(g.getDistance(p, trader)<=distance){
+				if(count>0)
+					return false;
+				else count++;
+			}
 		}
 		return true;
 	}

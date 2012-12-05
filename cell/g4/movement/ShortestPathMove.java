@@ -9,10 +9,21 @@ import cell.sim.Player.Direction;
 
 public class ShortestPathMove extends MoveAlgo {
 	private TraderFinder traderFinder;	
+	private YieldMove yield;
 	
-	public ShortestPathMove(Board board, Sack sack) {
-		super(board, sack);
-		traderFinder = new ClosestTraderFinder(board);
+	private boolean lastYield = true;
+	
+	private double yieldThreshold;
+	
+	public ShortestPathMove(Board board, Sack sack, Player player, double threshold) {
+		super(board, sack, player);
+		traderFinder = new ClosestTraderFinder(board, player);
+		yield = new MaxControlYieldMove(board, sack, player);
+		yieldThreshold = threshold;
+	}
+	
+	private boolean yieldOrNot() {
+		return Math.random() < yieldThreshold;
 	}
 	
 	@Override
@@ -21,9 +32,24 @@ public class ShortestPathMove extends MoveAlgo {
 		assert(board != null);
 		int nextTrader = traderFinder.findBestTrader(location, players, traders);
 		
-		List<Direction> dirs = board.nextMove(location, traders[nextTrader]);
+		if (nextTrader < 0) {
+			nextTrader = -nextTrader;
+			if (lastYield == true) {
+				if (yieldOrNot()) {
+					return yield.move(location, players, traders);
+				}
+				else {
+					lastYield = false;
+				}
+			}
+		}
 		
+		List<Direction> dirs = board.nextMove(location, traders[nextTrader]);
 		Direction dir = pickDir(location, dirs);
+
+		// reset = true
+		if (board.mindist(location, traders[nextTrader]) == 1)
+			lastYield = true;
 		
 		return dir;
 	}
