@@ -8,7 +8,7 @@ import java.util.Random;
 
 public class Player implements cell.sim.Player, Logger {
 
-	boolean DEBUG= true;
+	boolean DEBUG= false;
 	private int thresHold = 0;
 	private int iniMarble = 0;
 	private Random gen = new Random();

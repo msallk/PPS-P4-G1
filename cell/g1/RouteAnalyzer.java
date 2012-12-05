@@ -7,6 +7,7 @@ import java.util.TreeMap;
 
 public class RouteAnalyzer implements Logger{
 	Graph g;
+	boolean DEBUG=false;
 	TreeMap<Integer,int[]> traderMap;
 	public RouteAnalyzer(Graph g){
 		this.g=g;
@@ -124,6 +125,7 @@ public class RouteAnalyzer implements Logger{
 
 	@Override
 	public void log(String message) {
-		System.err.println(message);
+		if(DEBUG)
+			System.err.println(message);
 	}
 }
