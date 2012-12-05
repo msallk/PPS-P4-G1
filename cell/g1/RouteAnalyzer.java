@@ -1,5 +1,6 @@
 package cell.g1;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
@@ -9,12 +10,27 @@ public class RouteAnalyzer implements Logger{
 	Graph g;
 	boolean DEBUG=false;
 	TreeMap<Integer,int[]> traderMap;
+	private int selfNumber=-1;
 	public RouteAnalyzer(Graph g){
 		this.g=g;
 	}
 
+	public void findSelfNumber(int[] self, int[][] players)
+	{
+		for(int i=0; i<players.length; i++)
+		{
+			if(players[i][0]==self[0] && players[i][1]==self[1])
+			{	
+				selfNumber=i;
+				return;
+			}
+			
+		}
+	}
+	
+	
 	//TODO: get the best leprechaun location. Make sure we can get there faster than others 
-	public int[] getDestination1(int[] current, int[] sack,	int[][] players, int[][] traders,int priority){
+	public int[] getDestination1(int[] current, int[] sack,	int[][] players, int[][] traders,int priority,boolean checkNextStep){
 		int distance=Integer.MAX_VALUE;
 		int [] trader=null;
 		TreeMap<Integer,int[]> sortedTraders=new TreeMap<Integer,int[]>();
@@ -23,14 +39,17 @@ public class RouteAnalyzer implements Logger{
 			log("min distance: "+distance);
 			log("trader: "+Arrays.toString(trader));
 			int temp=g.getDistance(current,traders[i]);
+			if(temp==0)
+				continue;
 			log("next trader: "+Arrays.toString(traders[i]));
 			log("new distance: "+temp);
 			traderMap.put(temp, traders[i]);
-			if(temp<distance && checkOthers1(traders[i],players, temp)){
+			if(temp<distance && checkOthers1(traders[i],players, temp,checkNextStep)){
 				sortedTraders.put(temp,traders[i]);
 				trader=traders[i];
 				distance=temp;
 			}
+			
 		}
 		if(priority<=sortedTraders.size()){
 			Set<Integer> keys=sortedTraders.keySet();
@@ -113,14 +132,61 @@ public class RouteAnalyzer implements Logger{
 		return trader;
 	}
 
-	private boolean checkOthers1(int[] trader, int[][] players, int distance) {
+	private boolean checkOthers1( int[] trader, int[][] players, int distance, boolean checkNextStep) {
 		for(int[] p:players){
 			if(p==null)
 				continue;
-			if(g.getDistance(p, trader)<=distance)
+			if(p[0]==players[selfNumber][0] && p[1]==players[selfNumber][1])
+				continue;
+			int modifier=0;
+			if(checkNextStep)
+				modifier=1;
+			if(g.getDistance(p, trader)-modifier<=distance)
 				return false;
 		}
 		return true;
+	}
+	
+	//given a set of paths, return the first path that is affordable
+	public Path getAffordable(int[] sack, ArrayList<Path> paths)
+	{
+		for(Path p: paths)
+		{
+			int[] reqColors={0,0,0,0,0,0};
+			ArrayList<Node> nodes=p.locs;
+			//starts from 1 since path includes the starting point
+			for(int j=1; j<nodes.size(); j++)
+			{
+				int c=nodes.get(j).getColor();
+				reqColors[c]++;
+			}
+			for(int i=0; i<6; i++)
+			{
+				if(sack[i]<reqColors[i])
+					break;
+				else if(i==5)
+					return p;		
+			}
+		}
+		return null;
+	}
+	
+
+	public Path findCheapest(ArrayList<Path> paths, double[] rate) {
+		Path cheapest=null;
+		double min=Double.MAX_VALUE;
+		for(Path p: paths)
+		{
+			double totalV=0.0;
+			for (Node n: p.locs)
+				totalV+=rate[n.color];
+			if(totalV<min)
+			{	
+				min=totalV;	
+				cheapest=p;
+			}
+		}
+		return cheapest;
 	}
 
 	@Override
@@ -128,4 +194,5 @@ public class RouteAnalyzer implements Logger{
 		if(DEBUG)
 			System.err.println(message);
 	}
+
 }
