@@ -1,0 +1,15 @@
+<section class="story-metadata">
+  <h3>Summary</h3>
+  <p>{{ story.summary }}</p>
+
+  <h3>Tags</h3>
+  {% if story.tags %}
+    <ul class="story-tags">
+      {% for tag in story.tags %}
+        <li class="story-tag">{{ tag }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="story-tags--empty">No tags assigned</p>
+  {% endif %}
+</section>
