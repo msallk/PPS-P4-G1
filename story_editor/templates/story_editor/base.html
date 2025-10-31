@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Story Editor{% endblock title %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha512-oHDEc8XedGg3ry3Qtp9n0xuxJkw3yDXe4sdAl4zRhFtv7D1z7djzY5lf0NFEMevhk1FdYyAzS+u2ov4+F6E2g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="{% static 'story_editor/css/edit_story.css' %}" />
+  </head>
+  <body>
+    <header class="site-header">
+      <h1 class="site-title">Story Studio</h1>
+    </header>
+
+    <main class="site-content">
+      {% block content %}{% endblock content %}
+    </main>
+
+    <footer class="site-footer">
+      <p>&copy; {% now "Y" %} Story Studio. All rights reserved.</p>
+    </footer>
+  </body>
+</html>
