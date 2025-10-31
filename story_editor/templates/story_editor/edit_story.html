@@ -1,0 +1,18 @@
+{% extends "story_editor/base.html" %}
+
+{% block title %}Edit Story · Story Editor{% endblock title %}
+
+{% block content %}
+  <div class="edit-story">
+    {% include "story_editor/components/story_header.html" %}
+
+    <div class="edit-story__layout">
+      <div class="edit-story__metadata">
+        {% include "story_editor/components/story_metadata.html" %}
+      </div>
+      <div class="edit-story__form">
+        {% include "story_editor/components/story_form.html" %}
+      </div>
+    </div>
+  </div>
+{% endblock content %}
